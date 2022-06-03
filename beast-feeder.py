@@ -111,8 +111,7 @@ def process_recv_bytes(recv_bytes):
 
 # Listen for incoming bytes from the Receiver
 def listen_to_receiver():
-    print()
-    print('Start listening to Receiver...')
+    print('Start listening...')
     while 1:
         recv_bytes = bytearray(1)
         recv_bytes = sock_recv.recv(1)
@@ -170,5 +169,6 @@ connect_to_receiver()
 
 # Start worker, listening to Receiver server
 listen_to_receiver()
+
 # ------------------------------------------------------------------
 
