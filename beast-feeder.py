@@ -72,7 +72,7 @@ def msg_is_valid(message):
 
 # Connect to the Receiver server via UDP
 def connect_to_receiver():
-    print('Connecting to Receiver via TCP')
+    print('Connect to Receiver')
     global recv_host
     global recv_port
     server_address = (recv_host, recv_port)
@@ -119,7 +119,7 @@ def listen_to_receiver():
 
 # Parse start arguments
 def process_args():
-    print('Process arguments')
+    print('Detected arguments:')
     global recv_host
     global recv_port
     global dest_host
@@ -149,7 +149,7 @@ def process_args():
 # Title
 print()
 print(TITLE)
-print(BUILD)
+print('build ' + BUILD)
 print()
 
 # Process start arguments
@@ -157,18 +157,17 @@ process_args()
 
 # Create network endpoints
 # RECEIVER socket (TCP)
-print('Init Receiver connection')
+print('Init TCP connection to Receiver')
 sock_recv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # DESTINATION socket (UDP)
-print('Init Destination connection')
+print('Init UDP connection to Destination')
 sock_dest = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 print()
 
-# Connect to Receiver via TCP
+# Connect to Receiver
 connect_to_receiver()
 
 # Start worker, listening to Receiver server
 listen_to_receiver()
-
 # ------------------------------------------------------------------
 
