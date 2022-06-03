@@ -70,19 +70,15 @@ def msg_is_valid(message):
     # Message preamble and type is valid -> send to destination
     return 1
 
-# Connect to the Receiver server
+# Connect to the Receiver server via UDP
 def connect_to_receiver():
-    print('Connect to Receiver')
+    print('Connecting to Receiver via TCP')
     global recv_host
     global recv_port
     server_address = (recv_host, recv_port)
     sock_recv.connect(server_address)
 
-# Connect to the Destination server
-def connect_to_destination():
-    print('Dest connection is UDP, no connect action applicable')
-    # No connect function required due to being an UDP stream
-
+# Send message to Destination via UDP
 def send_to_destination(message):
     global dest_host
     global dest_port
@@ -169,10 +165,10 @@ print('Init Destination connection')
 sock_dest = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 print()
 
-# Init connections
+# Connect to Receiver via TCP
 connect_to_receiver()
-connect_to_destination()
 
-# Start worker
+# Start worker, listening to Receiver server
 listen_to_receiver()
 # ------------------------------------------------------------------
+
