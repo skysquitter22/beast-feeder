@@ -13,10 +13,10 @@ CLI usage: python3 beast-feeder.py <receiver host> <receiver port> <destination 
   
 Defaults:
   
-<receiver host>   : receiver
+receiver host   : receiver
 
-<receiver port>   : 30005
+receiver port   : 30005
 
-<destination host>: 10.9.2.1
+destination host: 10.9.2.1
 
-<destination port>: 11092
+destination port: 11092
