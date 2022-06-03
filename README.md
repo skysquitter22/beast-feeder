@@ -6,7 +6,7 @@ Build      : 10.220604.01
 
 Connect to a TCP BEAST server and forward each message via UDP.
 
-CLI usage: python3 beast-feeder.py receiver_host <receiver_port destination_host destination_port
+CLI usage: python3 beast-feeder.py receiver_host receiver_port destination_host destination_port
 
 Defaults:
   
