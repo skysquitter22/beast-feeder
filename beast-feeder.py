@@ -1,0 +1,178 @@
+# beast-feeder.py <recv_host> <recv_port> <dest_host> <dest_port>
+
+# LIBS ---------
+import socket
+import sys
+# --------------
+
+# TITLE ---------------------------
+BUILD = '10.220603.01'
+TITLE = 'SKYSQUITTER BEAST-FEEDER'
+# ---------------------------------
+
+# DEFAULTS -------------------
+RECV_HOST = 'receiver'
+RECV_PORT = 30005
+DEST_HOST = '10.9.2.1'
+DEST_PORT = 11092
+# ----------------------------
+
+# CONSTANTS ------------------
+# Beast
+ESCAPE_BYTE = 0x1a
+MSG_TYPE_1 = 0x31
+MSG_TYPE_2 = 0x32
+MSG_TYPE_3 = 0x33
+MSG_TYPE_4 = 0x34
+# Buffer
+BUFFER_SIZE = 64
+# ----------------------------
+
+# VARIABLES ---------------------
+buffer = bytearray(BUFFER_SIZE)
+buffer_index = 0
+# Set defaults
+recv_host = RECV_HOST
+recv_port = RECV_PORT
+dest_host = DEST_HOST
+dest_port = DEST_PORT
+# -------------------------------
+
+# FUNCTIONS DEFS ---------------------------------------------------
+# Return 1 if message preamble detected
+def preamble_detected():
+    global buffer_index
+    index = buffer_index - 1
+    # Check message type
+    if buffer[index] != MSG_TYPE_1 and buffer[index] != MSG_TYPE_2 and buffer[index] != MSG_TYPE_3 and buffer[index] != MSG_TYPE_4:
+        return 0
+    # Count amount of Escape bytes (has to be odd)
+    index -= 1
+    esc_count = 0
+    while index >= 0 and buffer[index] == ESCAPE_BYTE:
+        esc_count += 1
+        index -= 1
+    if index == 0 and buffer[index] == ESCAPE_BYTE:
+        return 0
+    if esc_count % 2 == 0:
+        return 0
+    return 1
+
+# Return 1 if message is to be sent
+def msg_is_valid(message):
+    # Check message preamble and tyoe
+    # ESC byte at beginning required
+    if message[0] != ESCAPE_BYTE:
+        return 0
+    # Either message tyoe 2 or 3 required
+    if message[1] != MSG_TYPE_2 and message[1] != MSG_TYPE_3:
+        return 0
+    # Message preamble and type is valid -> send to destination
+    return 1
+
+# Connect to the Receiver server
+def connect_to_receiver():
+    print('Connect to Receiver')
+    global recv_host
+    global recv_port
+    server_address = (recv_host, recv_port)
+    sock_recv.connect(server_address)
+
+# Connect to the Destination server
+def connect_to_destination():
+    print('Dest connection is UDP, no connect action applicable')
+    # No connect function required due to being an UDP stream
+
+def send_to_destination(message):
+    global dest_host
+    global dest_port
+    server_address = (dest_host, dest_port)
+    sock_dest.sendto(message, server_address)
+
+# Process received byte
+def process_recv_bytes(recv_bytes):
+    global buffer_index
+    # Avoid buffer overflow
+    if buffer_index == BUFFER_SIZE:
+        buffer_index = 0
+    # Add received data chunk to buffer
+    buffer[buffer_index:buffer_index + 1] = recv_bytes
+    buffer_index += 1
+    if buffer_index < 3:
+        return
+    # Look for Beast preamble
+    if preamble_detected():
+        # Prepare received message
+        message = bytearray(buffer_index - 2)
+        message = buffer[0:buffer_index - 2]
+        # Send message
+        if msg_is_valid(message):
+            send_to_destination(message)
+        # Reset buffer
+        buffer[0] = buffer[buffer_index - 2]
+        buffer[1] = buffer[buffer_index - 1]
+        buffer_index = 2
+
+# Listen for incoming bytes from the Receiver
+def listen_to_receiver():
+    print()
+    print('Start listening to Receiver...')
+    while 1:
+        recv_bytes = bytearray(1)
+        recv_bytes = sock_recv.recv(1)
+        process_recv_bytes(recv_bytes)
+
+# Parse start arguments
+def process_args():
+    print('Process arguments')
+    global recv_host
+    global recv_port
+    global dest_host
+    global dest_port
+    # Get number of arguments
+    args_len = len(sys.argv)
+    # Set RECEIVER host
+    if args_len >= 1:
+        recv_host = sys.argv[1]
+        print('Recv host: ' + recv_host)
+    # Set RECEIVER port
+    if args_len >= 2:
+        recv_port = int(sys.argv[2])
+        print('Recv port: ' + str(recv_port))
+    # Set DESTINATION host
+    if args_len >= 3:
+        dest_host = sys.argv[3]
+        print('Dest host: ' + dest_host)
+    # Set DESTINATION port
+    if args_len >= 4:
+        dest_port = int(sys.argv[4])
+        print('Dest port: ' + str(dest_port))
+    print()
+# ------------------------------------------------------------------
+
+# EXECUTE ----------------------------------------------------------
+# Title
+print()
+print(TITLE)
+print(BUILD)
+print()
+
+# Process start arguments
+process_args()
+
+# Create network endpoints
+# RECEIVER socket (TCP)
+print('Init Receiver connection')
+sock_recv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# DESTINATION socket (UDP)
+print('Init Destination connection')
+sock_dest = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+print()
+
+# Init connections
+connect_to_receiver()
+connect_to_destination()
+
+# Start worker
+listen_to_receiver()
+# ------------------------------------------------------------------
