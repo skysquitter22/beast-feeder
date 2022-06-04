@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+#
 # beast-feeder.py <recv_host> <recv_port> <dest_host> <dest_port>
 
 # LIBS ---------
@@ -11,7 +13,7 @@ TITLE = 'SKYSQUITTER BEAST-FEEDER'
 # ---------------------------------
 
 # DEFAULTS -------------------
-RECV_HOST = 'receiver'
+RECV_HOST = 'readsb'
 RECV_PORT = 30005
 DEST_HOST = '10.9.2.1'
 DEST_PORT = 11092
