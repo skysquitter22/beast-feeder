@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+#
 # beast-feeder.py <recv_host> <recv_port> <dest_host> <dest_port>
 
 # LIBS ---------
