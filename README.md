@@ -10,10 +10,12 @@ CLI usage: python3 beast-feeder.py [receiver host] [receiver port] [destination 
 
 Defaults:
   
-receiver host: `readsb`
+receiver host: `readsb` # Receiver host/ip depends on your setup
 
-receiver port: `30005`
+receiver port: `30005` # Receiver BEAST port streaming ALL Mode S Downlink Formats CRC checked
 
-destination host: `10.9.2.1`
+destination host: `10.9.2.1` # Privided by our technical support, if other
 
-destination port: `11092`
+destination port: `11092` # Privided by our technical support, if other
+
+VPN keys required and privided by our technical support
