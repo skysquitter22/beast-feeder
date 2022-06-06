@@ -131,7 +131,7 @@ def process_args():
     global dest_host
     global dest_port
     # Get number of arguments
-    args_len = len(sys.argv)
+    args_len = len(sys.argv) - 1
     # Set RECEIVER host
     if args_len >= 1:
         recv_host = sys.argv[1]
