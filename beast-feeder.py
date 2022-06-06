@@ -6,6 +6,8 @@
 # LIBS ---------
 import socket
 import sys
+import functools
+
 # --------------
 
 # TITLE ---------------------------
@@ -40,6 +42,10 @@ recv_port = RECV_PORT
 dest_host = DEST_HOST
 dest_port = DEST_PORT
 # -------------------------------
+
+# ensure print always flushes the buffer:
+print = functools.partial(print, flush=True)    # pylint: disable=W0622
+# ----------------------------
 
 # FUNCTIONS DEFS ---------------------------------------------------
 def preamble_detected():
