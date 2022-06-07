@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
-#
-# beast-feeder.py <recv_host> <recv_port> <dest_host> <dest_port>
+# pylint: disable=C0103,C0114,C0112,C0116
+
+""" beast-feeder.py <recv_host> <recv_port> <dest_host> <dest_port> """
 
 # LIBS ---------
 import socket
 import sys
+import functools
+
 # --------------
 
 # TITLE ---------------------------
-BUILD = '10.220604.01'
+BUILD = '10.220606.01'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 # ---------------------------------
 
@@ -40,13 +43,19 @@ dest_host = DEST_HOST
 dest_port = DEST_PORT
 # -------------------------------
 
+# ensure print always flushes the buffer:
+print = functools.partial(print, flush=True)    # pylint: disable=W0622
+# ----------------------------
+
 # FUNCTIONS DEFS ---------------------------------------------------
-# Return 1 if message preamble detected
 def preamble_detected():
-    global buffer_index
+    """Return 1 if message preamble detected"""
+    ## global buffer_index
     index = buffer_index - 1
     # Check message type
-    if buffer[index] != MSG_TYPE_1 and buffer[index] != MSG_TYPE_2 and buffer[index] != MSG_TYPE_3 and buffer[index] != MSG_TYPE_4:
+    if buffer[index] != MSG_TYPE_1 and buffer[index] != MSG_TYPE_2 and \
+                                       buffer[index] != MSG_TYPE_3 and \
+                                       buffer[index] != MSG_TYPE_4:
         return 0
     # Count amount of Escape bytes (has to be odd)
     index -= 1
@@ -60,10 +69,9 @@ def preamble_detected():
         return 0
     return 1
 
-# Return 1 if message is to be sent
 def msg_is_valid(message):
-    # Check message preamble and tyoe
-    # ESC byte at beginning required
+    """Return 1 if message is to be sent; check message preamble and type;
+       ESC byte at beginning required"""
     if message[0] != ESCAPE_BYTE:
         return 0
     # Either message tyoe 2 or 3 required
@@ -74,22 +82,23 @@ def msg_is_valid(message):
 
 # Connect to the Receiver server via UDP
 def connect_to_receiver():
+    """ """
     print('Connect to Receiver')
-    global recv_host
-    global recv_port
+    ## global recv_host
+    ## global recv_port
     server_address = (recv_host, recv_port)
     sock_recv.connect(server_address)
 
 # Send message to Destination via UDP
 def send_to_destination(message):
-    global dest_host
-    global dest_port
+    ## global dest_host
+    ## global dest_port
     server_address = (dest_host, dest_port)
     sock_dest.sendto(message, server_address)
 
 # Process received byte
 def process_recv_bytes(recv_bytes):
-    global buffer_index
+    global buffer_index         # pylint: disable=W0603
     # Avoid buffer overflow
     if buffer_index == BUFFER_SIZE:
         buffer_index = 0
@@ -121,29 +130,30 @@ def listen_to_receiver():
 
 # Parse start arguments
 def process_args():
-    print('Detected arguments:')
+    # pylint: disable=W0603
+    print('Configuration:')
     global recv_host
     global recv_port
     global dest_host
     global dest_port
     # Get number of arguments
-    args_len = len(sys.argv)
+    args_len = len(sys.argv) - 1
     # Set RECEIVER host
     if args_len >= 1:
         recv_host = sys.argv[1]
-        print('Recv host: ' + recv_host)
     # Set RECEIVER port
     if args_len >= 2:
         recv_port = int(sys.argv[2])
-        print('Recv port: ' + str(recv_port))
     # Set DESTINATION host
     if args_len >= 3:
         dest_host = sys.argv[3]
-        print('Dest host: ' + dest_host)
     # Set DESTINATION port
     if args_len >= 4:
         dest_port = int(sys.argv[4])
-        print('Dest port: ' + str(dest_port))
+    print('Recv host: ' + recv_host)
+    print('Recv port: ' + str(recv_port))
+    print('Dest host: ' + dest_host)
+    print('Dest port: ' + str(dest_port))
     print()
 # ------------------------------------------------------------------
 
@@ -172,4 +182,3 @@ connect_to_receiver()
 # Start worker, listening to Receiver server
 listen_to_receiver()
 # ------------------------------------------------------------------
-
