@@ -11,7 +11,7 @@ import functools
 # --------------
 
 # TITLE ---------------------------
-BUILD = '10.220606.01'
+BUILD = '10.220610.01'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 # ---------------------------------
 
