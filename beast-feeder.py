@@ -11,7 +11,7 @@ import functools
 # --------------
 
 # TITLE ---------------------------
-BUILD = '10.220606.01'
+BUILD = '10.220610.01'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 # ---------------------------------
 
@@ -53,10 +53,16 @@ def preamble_detected():
     ## global buffer_index
     index = buffer_index - 1
     # Check message type
-    if buffer[index] != MSG_TYPE_1 and buffer[index] != MSG_TYPE_2 and \
-                                       buffer[index] != MSG_TYPE_3 and \
-                                       buffer[index] != MSG_TYPE_4:
-        return 0
+    try:
+        if buffer[index] != MSG_TYPE_1 and buffer[index] != MSG_TYPE_2 and \
+                        buffer[index] != MSG_TYPE_3 and \
+                        buffer[index] != MSG_TYPE_4:
+            return 0
+    except IndexError:
+        # This error is almost always caused by losing the connection to the RECV_HOST.
+        print("Beast-feeder is exiting - did we lose the connection to " \
+                        + recv_host + ":" + str(recv_port) + "?")
+        sys.exit()
     # Count amount of Escape bytes (has to be odd)
     index -= 1
     esc_count = 0
