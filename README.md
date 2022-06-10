@@ -2,8 +2,6 @@
 
 Script file: beast-feeder.py
 
-Build      : 10.220604.01
-
 Connect to a TCP BEAST server and forward each message via UDP.
 
 CLI usage: python3 beast-feeder.py [receiver host] [receiver port] [destination host] [destination port]
