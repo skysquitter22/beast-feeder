@@ -12,7 +12,7 @@ import functools
 
 # TITLE ---------------------------
 BUILD_MAJOR = '10'
-BUILD_DATE = '220610'
+BUILD_DATE = '220616' # this is the fall-back date for versioning
 BUILD_MINOR = '01'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
