@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# pylint: disable=C0103,C0114,C0112,C0116
+# pylint: disable=C0103,C0114,C0112,C0116,W1514
 
 """ beast-feeder.py <recv_host> <recv_port> <dest_host> <dest_port> """
 
@@ -11,8 +11,11 @@ import functools
 # --------------
 
 # TITLE ---------------------------
-BUILD = '10.220610.01'
+BUILD_MAJOR = '10'
+BUILD_DATE = '220610'
+BUILD_MINOR = '01'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
+VERSION_FILENAME = '/.VERSION.beast-feeder'
 # ---------------------------------
 
 # DEFAULTS -------------------
@@ -46,6 +49,15 @@ dest_port = DEST_PORT
 # ensure print always flushes the buffer:
 print = functools.partial(print, flush=True)    # pylint: disable=W0622
 # ----------------------------
+
+# Make Build String:
+try:
+    with open(VERSION_FILENAME, 'r') as f:
+        EXT_BUILD_DATE = f.read()
+except: # pylint: disable=W0702
+    BUILD = BUILD_MAJOR + '.' + BUILD_DATE + '.' + BUILD_MINOR
+else:
+    BUILD = BUILD_MAJOR + '.' + EXT_BUILD_DATE.strip() + '.' + BUILD_MINOR
 
 # FUNCTIONS DEFS ---------------------------------------------------
 def preamble_detected():
