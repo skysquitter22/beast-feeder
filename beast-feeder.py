@@ -13,7 +13,7 @@ import functools
 # TITLE ---------------------------
 BUILD_MAJOR = '11'
 BUILD_DATE = '220806' # this is the fall-back date for versioning
-BUILD_MINOR = '01'
+BUILD_MINOR = '02'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
 # ---------------------------------
@@ -60,13 +60,23 @@ else:
     BUILD = BUILD_MAJOR + '.' + EXT_BUILD_DATE.strip() + '.' + BUILD_MINOR
 
 # FUNCTIONS DEFS ---------------------------------------------------
-def sigint_handler(sig, frame):
-    """ Handle received SIGINT, shutting down gracefully by closing the network sockets prior exit """
-    print('SIGINT received, shutdown gracefully')
+def shutdown_gracefully():
+    """ Shutting down gracefully by closing the network sockets prior exit """
+    print('Shutdown gracefully!')
     disconnect_from_receiver()
     close_socket_to_receiver()
     close_socket_to_destination()
     sys.exit()
+
+def sigint_handler(sig, frame):
+    """ Handle received SIGINT """
+    print('SIGINT received')
+    shutdown_gracefully()
+    
+def sigterm_handler(sig, frame):
+    """ Handle received SIGTERM """
+    print('SIGTERM received')
+    shutdown_gracefully()
     
 def preamble_detected():
     """ Return 1 if message preamble detected """
@@ -230,8 +240,9 @@ print('Init UDP connection to Destination')
 sock_dest = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 print()
 
-# Arm SIGINT handler
+# Arm SIGNAL handlers
 signal.signal(signal.SIGINT, sigint_handler)
+signal.signal(signal.SIGTERM, sigterm_handler)
 
 # Connect to Receiver
 connect_to_receiver()
