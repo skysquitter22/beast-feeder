@@ -60,7 +60,7 @@ else:
     BUILD = BUILD_MAJOR + '.' + EXT_BUILD_DATE.strip() + '.' + BUILD_MINOR
 
 # FUNCTIONS DEFS ---------------------------------------------------
-def signal_handler(sig, frame):
+def sigint_handler(sig, frame):
     """ Handle received SIGINT, shutting down gracefully by closing the network sockets prior exit """
     print('SIGINT received, shutdown gracefully')
     disconnect_from_receiver()
@@ -230,9 +230,13 @@ print('Init UDP connection to Destination')
 sock_dest = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 print()
 
+# Arm sigint handler
+signal.signal(signal.SIGINT, sigint_handler)
+
 # Connect to Receiver
 connect_to_receiver()
 
 # Start worker, listening to Receiver server
 listen_to_receiver()
 # ------------------------------------------------------------------
+
