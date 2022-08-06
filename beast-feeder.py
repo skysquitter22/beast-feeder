@@ -64,8 +64,8 @@ def sigint_handler(sig, frame):
     """ Handle received SIGINT, shutting down gracefully by closing the network sockets prior exit """
     print('SIGINT received, shutdown gracefully')
     disconnect_from_receiver()
-    close_receiver()
-    close_destination()
+    close_socket_to_receiver()
+    close_socket_to_destination()
     sys.exit()
     
 def preamble_detected():
@@ -127,23 +127,23 @@ def disconnect_from_receiver():
     	# Execption disconnecting TCP socket
     	print('Exception while disconnecting from Receiver')
     	
-def close_receiver():
+def close_socket_to_receiver():
     """ Close socket to the Receiver server """
-    print('Close Receiver')
+    print('Close socket to Receiver')
     try:
         sock_recv.close()
     except:
     	# Execption closing TCP socket
-    	print('Exception while closing Receiver')
+    	print('Exception while closing socket to Receiver')
     	
-def close_destination():
-    """ Close socket to Destination server """
-    print('Close Destination')
+def close_socket_to_destination():
+    """ Close socket to the Destination server """
+    print('Close socket to Destination')
     try:
         sock_dest.close()
     except:
     	# Execption closing UDP socket
-    	print('Exception while closing Destination')
+    	print('Exception while closing socket to Destination')
         
 def send_to_destination(message):
     """ Send message to Destination via UDP """
@@ -230,7 +230,7 @@ print('Init UDP connection to Destination')
 sock_dest = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 print()
 
-# Arm sigint handler
+# Arm SIGINT handler
 signal.signal(signal.SIGINT, sigint_handler)
 
 # Connect to Receiver
