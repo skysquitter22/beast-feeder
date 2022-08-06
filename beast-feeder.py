@@ -4,15 +4,15 @@
 """ beast-feeder.py <recv_host> <recv_port> <dest_host> <dest_port> """
 
 # LIBS ---------
+import signal
 import socket
 import sys
 import functools
-
 # --------------
 
 # TITLE ---------------------------
-BUILD_MAJOR = '10'
-BUILD_DATE = '220620' # this is the fall-back date for versioning
+BUILD_MAJOR = '11'
+BUILD_DATE = '220806' # this is the fall-back date for versioning
 BUILD_MINOR = '01'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
@@ -60,8 +60,16 @@ else:
     BUILD = BUILD_MAJOR + '.' + EXT_BUILD_DATE.strip() + '.' + BUILD_MINOR
 
 # FUNCTIONS DEFS ---------------------------------------------------
+def signal_handler(sig, frame):
+    """ Handle received SIGINT, shutting down gracefully by closing the network sockets prior exit """
+    print('SIGINT received, shutdown gracefully')
+    disconnect_from_receiver()
+    close_receiver()
+    close_destination()
+    sys.exit()
+    
 def preamble_detected():
-    """Return 1 if message preamble detected"""
+    """ Return 1 if message preamble detected """
     ## global buffer_index
     index = buffer_index - 1
     # Check message type
@@ -88,8 +96,8 @@ def preamble_detected():
     return 1
 
 def msg_is_valid(message):
-    """Return 1 if message is to be sent; check message preamble and type;
-       ESC byte at beginning required"""
+    """ Return 1 if message is to be sent; check message preamble and type;
+       ESC byte at beginning required """
     if message[0] != ESCAPE_BYTE:
         return 0
     # Either message tyoe 2 or 3 required
@@ -110,6 +118,33 @@ def connect_to_receiver():
                     + recv_host + ":" + str(recv_port) + " running?")
         sys.exit()
 
+def disconnect_from_receiver():
+    """ Disconnect from the Receiver server """
+    print('Disconnect from Receiver')
+    try:
+        sock_recv.shutdown(socket.SHUT_RDWR)
+    except:
+    	# Execption disconnecting TCP socket
+    	print('Exception while disconnecting from Receiver')
+    	
+def close_receiver():
+    """ Close socket to the Receiver server """
+    print('Close Receiver')
+    try:
+        sock_recv.close()
+    except:
+    	# Execption closing TCP socket
+    	print('Exception while closing Receiver')
+    	
+def close_destination():
+    """ Close socket to Destination server """
+    print('Close Destination')
+    try:
+        sock_dest.close()
+    except:
+    	# Execption closing UDP socket
+    	print('Exception while closing Destination')
+        
 def send_to_destination(message):
     """ Send message to Destination via UDP """
     server_address = (dest_host, dest_port)
