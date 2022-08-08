@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
-# pylint: disable=C0103,C0114,C0112,C0116,W1514
+# pylint: disable=C0103,C0114,C0112,C0116,W1514,W0702
 
 """ beast-feeder.py <recv_host> <recv_port> <dest_host> <dest_port> """
 
 # LIBS ---------
+import signal
 import socket
 import sys
 import functools
-
 # --------------
 
 # TITLE ---------------------------
-BUILD_MAJOR = '10'
-BUILD_DATE = '220616' # this is the fall-back date for versioning
-BUILD_MINOR = '01'
+BUILD_MAJOR = '11'
+BUILD_DATE = '220806' # this is the fall-back date for versioning
+BUILD_MINOR = '02'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
 # ---------------------------------
@@ -54,14 +54,32 @@ print = functools.partial(print, flush=True)    # pylint: disable=W0622
 try:
     with open(VERSION_FILENAME, 'r') as f:
         EXT_BUILD_DATE = f.read()
-except: # pylint: disable=W0702
+except:
     BUILD = BUILD_MAJOR + '.' + BUILD_DATE + '.' + BUILD_MINOR
 else:
     BUILD = BUILD_MAJOR + '.' + EXT_BUILD_DATE.strip() + '.' + BUILD_MINOR
 
 # FUNCTIONS DEFS ---------------------------------------------------
+def shutdown_gracefully():
+    """ Shutting down gracefully by closing the network sockets prior exit """
+    print('Shutdown gracefully!')
+    disconnect_from_receiver()
+    close_socket_to_receiver()
+    close_socket_to_destination()
+    sys.exit()
+
+def sigint_handler():
+    """ Handle received SIGINT """
+    print('SIGINT received')
+    shutdown_gracefully()
+
+def sigterm_handler():
+    """ Handle received SIGTERM """
+    print('SIGTERM received')
+    shutdown_gracefully()
+
 def preamble_detected():
-    """Return 1 if message preamble detected"""
+    """ Return 1 if message preamble detected """
     ## global buffer_index
     index = buffer_index - 1
     # Check message type
@@ -88,8 +106,8 @@ def preamble_detected():
     return 1
 
 def msg_is_valid(message):
-    """Return 1 if message is to be sent; check message preamble and type;
-       ESC byte at beginning required"""
+    """ Return 1 if message is to be sent; check message preamble and type;
+       ESC byte at beginning required """
     if message[0] != ESCAPE_BYTE:
         return 0
     # Either message tyoe 2 or 3 required
@@ -98,24 +116,52 @@ def msg_is_valid(message):
     # Message preamble and type is valid -> send to destination
     return 1
 
-# Connect to the Receiver server via UDP
 def connect_to_receiver():
-    """ """
+    """ Connect to the Receiver server via TCP"""
     print('Connect to Receiver')
-    ## global recv_host
-    ## global recv_port
-    server_address = (recv_host, recv_port)
-    sock_recv.connect(server_address)
+    try:
+        server_address = (recv_host, recv_port)
+        sock_recv.connect(server_address)
+    except:
+        # This error is almost always caused by losing the connection to the RECV_HOST.
+        print("Beast-feeder's domain name cannot be resolved - is the machine or container named " \
+                    + recv_host + ":" + str(recv_port) + " running?")
+        sys.exit()
 
-# Send message to Destination via UDP
+def disconnect_from_receiver():
+    """ Disconnect from the Receiver server """
+    print('Disconnect from Receiver')
+    try:
+        sock_recv.shutdown(socket.SHUT_RDWR)
+    except:
+    	# Execption disconnecting TCP socket
+        print('Exception while disconnecting from Receiver')
+
+def close_socket_to_receiver():
+    """ Close socket to the Receiver server """
+    print('Close socket to Receiver')
+    try:
+        sock_recv.close()
+    except:
+    	# Execption closing TCP socket
+        print('Exception while closing socket to Receiver')
+
+def close_socket_to_destination():
+    """ Close socket to the Destination server """
+    print('Close socket to Destination')
+    try:
+        sock_dest.close()
+    except:
+    	# Execption closing UDP socket
+        print('Exception while closing socket to Destination')
+
 def send_to_destination(message):
-    ## global dest_host
-    ## global dest_port
+    """ Send message to Destination via UDP """
     server_address = (dest_host, dest_port)
     sock_dest.sendto(message, server_address)
 
-# Process received byte
 def process_recv_bytes(recv_bytes):
+    """ Process received byte """
     global buffer_index         # pylint: disable=W0603
     # Avoid buffer overflow
     if buffer_index == BUFFER_SIZE:
@@ -138,17 +184,17 @@ def process_recv_bytes(recv_bytes):
         buffer[1] = buffer[buffer_index - 1]
         buffer_index = 2
 
-# Listen for incoming bytes from the Receiver
 def listen_to_receiver():
+    """ Listen for incoming bytes from the Receiver """
     print('Start listening...')
     while 1:
         recv_bytes = bytearray(1)
         recv_bytes = sock_recv.recv(1)
         process_recv_bytes(recv_bytes)
 
-# Parse start arguments
 def process_args():
     # pylint: disable=W0603
+    """ Parse start arguments """
     print('Configuration:')
     global recv_host
     global recv_port
@@ -193,6 +239,10 @@ sock_recv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 print('Init UDP connection to Destination')
 sock_dest = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 print()
+
+# Arm SIGNAL handlers
+signal.signal(signal.SIGINT, sigint_handler)
+signal.signal(signal.SIGTERM, sigterm_handler)
 
 # Connect to Receiver
 connect_to_receiver()
