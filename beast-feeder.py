@@ -68,16 +68,16 @@ def shutdown_gracefully():
     close_socket_to_destination()
     sys.exit()
 
-def sigint_handler(sig, frame):
+def sigint_handler():
     """ Handle received SIGINT """
     print('SIGINT received')
     shutdown_gracefully()
-    
-def sigterm_handler(sig, frame):
+
+def sigterm_handler():
     """ Handle received SIGTERM """
     print('SIGTERM received')
     shutdown_gracefully()
-    
+
 def preamble_detected():
     """ Return 1 if message preamble detected """
     ## global buffer_index
@@ -135,8 +135,8 @@ def disconnect_from_receiver():
         sock_recv.shutdown(socket.SHUT_RDWR)
     except:
     	# Execption disconnecting TCP socket
-    	print('Exception while disconnecting from Receiver')
-    	
+        print('Exception while disconnecting from Receiver')
+
 def close_socket_to_receiver():
     """ Close socket to the Receiver server """
     print('Close socket to Receiver')
@@ -144,8 +144,8 @@ def close_socket_to_receiver():
         sock_recv.close()
     except:
     	# Execption closing TCP socket
-    	print('Exception while closing socket to Receiver')
-    	
+        print('Exception while closing socket to Receiver')
+
 def close_socket_to_destination():
     """ Close socket to the Destination server """
     print('Close socket to Destination')
@@ -153,8 +153,8 @@ def close_socket_to_destination():
         sock_dest.close()
     except:
     	# Execption closing UDP socket
-    	print('Exception while closing socket to Destination')
-        
+        print('Exception while closing socket to Destination')
+
 def send_to_destination(message):
     """ Send message to Destination via UDP """
     server_address = (dest_host, dest_port)
