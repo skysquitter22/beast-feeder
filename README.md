@@ -16,4 +16,4 @@ destination host: `10.9.2.1` # Privided by our technical support, if other
 
 destination port: `11092` # Privided by our technical support, if other
 
-VPN keys required and privided by our technical support
+VPN keys are required! For more information please visit www.skysquitter.com
