@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # pylint: disable=C0103,C0114,C0112,C0116,W1514,W0702
 
-""" beast-feeder.py <recv_host> <recv_port> <dest_host> <dest_port> """
+""" beast-feeder.py <recv_host> <recv_port> <dest_host> <dest_port> <gps_avail> """
 
 # LIBS ---------
 import signal
@@ -12,7 +12,7 @@ import functools
 
 # TITLE ---------------------------
 BUILD_MAJOR = '11'
-BUILD_DATE = '220806' # this is the fall-back date for versioning
+BUILD_DATE = '221203' # this is the fall-back date for versioning
 BUILD_MINOR = '02'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
@@ -23,6 +23,7 @@ RECV_HOST = 'readsb'
 RECV_PORT = 30005
 DEST_HOST = '10.9.2.1'
 DEST_PORT = 11092
+GPS_AVAIL = False
 # ----------------------------
 
 # CONSTANTS ------------------
@@ -44,6 +45,7 @@ recv_host = RECV_HOST
 recv_port = RECV_PORT
 dest_host = DEST_HOST
 dest_port = DEST_PORT
+gps_avail = GPS_AVAIL
 # -------------------------------
 
 # ensure print always flushes the buffer:
@@ -250,4 +252,3 @@ connect_to_receiver()
 # Start worker, listening to Receiver server
 listen_to_receiver()
 # ------------------------------------------------------------------
-
