@@ -81,7 +81,7 @@ def sigterm_handler():
     shutdown_gracefully()
 
 def preamble_detected():
-    """ Return 1 if message preamble detected """
+    """ Return True if message preamble detected """
     ## global buffer_index
     index = buffer_index - 1
     # Check message type
@@ -89,7 +89,7 @@ def preamble_detected():
         if buffer[index] != MSG_TYPE_1 and buffer[index] != MSG_TYPE_2 and \
                         buffer[index] != MSG_TYPE_3 and \
                         buffer[index] != MSG_TYPE_4:
-            return 0
+            return False
     except IndexError:
         # This error is almost always caused by losing the connection to the RECV_HOST.
         print("Beast-feeder is exiting - did we lose the connection to " \
@@ -102,21 +102,21 @@ def preamble_detected():
         esc_count += 1
         index -= 1
     if index == 0 and buffer[index] == ESCAPE_BYTE:
-        return 0
+        return False
     if esc_count % 2 == 0:
-        return 0
-    return 1
+        return False
+    return True
 
 def msg_is_valid(message):
-    """ Return 1 if message is to be sent; check message preamble and type;
+    """ Return True if message is to be sent; check message preamble and type;
        ESC byte at beginning required """
     if message[0] != ESCAPE_BYTE:
-        return 0
+        return False
     # Either message tyoe 2 or 3 required
     if message[1] != MSG_TYPE_2 and message[1] != MSG_TYPE_3:
-        return 0
+        return False
     # Message preamble and type is valid -> send to destination
-    return 1
+    return True
 
 def connect_to_receiver():
     """ Connect to the Receiver server via TCP"""
@@ -202,25 +202,33 @@ def process_args():
     global recv_port
     global dest_host
     global dest_port
+    global gps_avail
     # Get number of arguments
-    args_len = len(sys.argv) - 1
+    args_len = len(sys.argv)
     # Set RECEIVER host
-    if args_len >= 1:
+    if args_len > 1:
         recv_host = sys.argv[1]
     # Set RECEIVER port
-    if args_len >= 2:
+    if args_len > 2:
         recv_port = int(sys.argv[2])
     # Set DESTINATION host
-    if args_len >= 3:
+    if args_len > 3:
         dest_host = sys.argv[3]
     # Set DESTINATION port
-    if args_len >= 4:
+    if args_len > 4:
         dest_port = int(sys.argv[4])
+    # Set GPS available
+    if args_len > 5:
+        gps_avail = strIsTrue(sys.argv[5])
     print('Recv host: ' + recv_host)
     print('Recv port: ' + str(recv_port))
     print('Dest host: ' + dest_host)
     print('Dest port: ' + str(dest_port))
+    print('GPS avail: ' + str(gps_avail))
     print()
+    
+def strIsTrue(str):
+    return str.lower() in ('true', '1', 'yes', 'y')
 # ------------------------------------------------------------------
 
 # EXECUTE ----------------------------------------------------------
