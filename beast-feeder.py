@@ -37,11 +37,12 @@ MSG_TYPE_4 = 0x34
 TIMESTAMP_LEN = 6
 TIMESTAMP_INDEX = 2
 # Buffer
-BUFFER_SIZE = 64
+MSG_BUFFER_SIZE = 64
+TIMESTAMP_BUFFER_SIZE = 16
 # ----------------------------
 
 # VARIABLES ---------------------
-buffer = bytearray(BUFFER_SIZE)
+buffer = bytearray(MSG_BUFFER_SIZE)
 buffer_index = 0
 # Set defaults
 recv_host = RECV_HOST
@@ -169,7 +170,7 @@ def process_recv_bytes(recv_bytes):
     """ Process received byte """
     global buffer_index         # pylint: disable=W0603
     # Avoid buffer overflow
-    if buffer_index == BUFFER_SIZE:
+    if buffer_index == MSG_BUFFER_SIZE:
         buffer_index = 0
     # Add received data chunk to buffer
     buffer[buffer_index:buffer_index + 1] = recv_bytes
@@ -204,19 +205,14 @@ def get_new_timestamped_message(message):
         counter += 1
     signalIndex = index
     # Create new message
-    new_message = []
+    new_message_len = 2 + len(timestamp_buffer) + len(message[signalIndex:])
+    new_message = bytearray(new_message_len)
     # Preamble
-    new_message.append(message[0])
-    new_message.append(message[1])
+    new_message.extend(message[0:2])
     # New timestamp
-    i = 0
-    while i < len(timestamp_buffer):
-        new_message.append(timestamp_buffer[i])
-        i += 1
-    # Rest of orginal message
-    i = signalIndex
-    while i < len(message):
-        new_message.append(message[i])
+    new_message.extend(timestamp_buffer)
+    # Remaining orginal message
+    new_message.extend(message[signalIndex:])
     return new_message
         
 def get_timestamp_buffer():
@@ -227,34 +223,47 @@ def get_timestamp_buffer():
     secs_of_day = (now - midnight).seconds
     nanos_of_sec = now.microsecond * 1000
     # Build timestamp
-    timestamp_buffer = []
+    byte_counter = 0
+    timestamp_buffer = bytearray(TIMESTAMP_BUFFER_SIZE)
     # Secs
     timestamp_buffer.append(secs_of_day >> 10)
+    byte_counter += 1
     if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
         timestamp_buffer.append(ESCAPE_BYTE)
+        byte_counter += 1
     secs_of_day = secs_of_day - (timestamp_buffer[len(timestamp_buffer) - 1] << 10)
     timestamp_buffer.append(secs_of_day >> 2)
+    byte_counter += 1
     if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
         timestamp_buffer.append(ESCAPE_BYTE)
+        byte_counter += 1
     secs_of_day = secs_of_day - (timestamp_buffer[len(timestamp_buffer) - 1]  << 2)
     byte2= secs_of_day << 6
     # Nanos
     timestamp_buffer.append(byte2 + (nanos_of_sec >> 24))
+    byte_counter += 1
     if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
         timestamp_buffer.append(ESCAPE_BYTE)
+        byte_counter += 1
     nanos_of_sec = nanos_of_sec - ((timestamp_buffer[len(timestamp_buffer) - 1] & 0x3f) << 24)
     timestamp_buffer.append(nanos_of_sec >> 16)
+    byte_counter += 1
     if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
         timestamp_buffer.append(ESCAPE_BYTE)
+        byte_counter += 1
     nanos_of_sec = nanos_of_sec - (timestamp_buffer[len(timestamp_buffer) - 1] << 16)
     timestamp_buffer.append(nanos_of_sec >> 8)
+    byte_counter += 1
     if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
         timestamp_buffer.append(ESCAPE_BYTE)
+        byte_counter += 1
     nanos_of_sec = nanos_of_sec - (timestamp_buffer[len(timestamp_buffer) - 1] << 8)
     timestamp_buffer.append(nanos_of_sec)
+    byte_counter += 1
     if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
         timestamp_buffer.append(ESCAPE_BYTE)
-    return timestamp_buffer
+        byte_counter += 1
+    return timestamp_buffer[0:byte_counter]
     
 def listen_to_receiver():
     """ Listen for incoming bytes from the Receiver """
