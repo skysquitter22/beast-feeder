@@ -35,7 +35,7 @@ MSG_TYPE_2 = 0x32
 MSG_TYPE_3 = 0x33
 MSG_TYPE_4 = 0x34
 TIMESTAMP_LEN = 6
-TIMESTAMP_INDEX_BEGIN = 2
+TIMESTAMP_INDEX = 2
 # Buffer
 BUFFER_SIZE = 64
 # ----------------------------
@@ -184,57 +184,73 @@ def process_recv_bytes(recv_bytes):
         # Send message
         if msg_is_valid(message):
             if gps_avail == False:
-                message = insert_timestamp_in_message(message)
+                message = get_new_timestamped_message(message)
             send_to_destination(message)
         # Reset buffer
         buffer[0] = buffer[buffer_index - 2]
         buffer[1] = buffer[buffer_index - 1]
         buffer_index = 2
 
-def insert_timestamp_in_message(message):
+def get_new_timestamped_message(message):
+    timestamp_buffer = get_timestamp_buffer()
      # Find timestamp begin and end index
-    index = TIMESTAMP_INDEX_BEGIN
+    index = TIMESTAMP_INDEX
     counter = 0
     while counter < TIMESTAMP_LEN:
         if message[index] == ESCAPE_BYTE:
             index += 1
         index +=1
         counter += 1
-    timestampIndexEnd = index
-
+    signalIndex = index
+    # Create new message
+    new_message = []
+    # Preamble
+    new_message.append(message[0])
+    new_message.append(message[1])
+    # New timestamp
+    i = 0
+    while i < len(timestamp_buffer):
+        new_message.append(timestamp_buffer[i])
+        i += 1
+    # Rest of orginal message
+    i = signalIndex
+    while i < len(message):
+        new_message.append(message[i])
+    return new_message
+        
 def get_timestamp_buffer():
     """ Insert the system time as timestamp """
    # Get actual time values
     now = datetime.datetime.now()
     midnight = datetime.datetime.combine(now.date(), datetime.time())
-    secsOfDay = (now - midnight).seconds
-    nanosOfSec = now.microsecond * 1000
+    secs_of_day = (now - midnight).seconds
+    nanos_of_sec = now.microsecond * 1000
     # Build timestamp
     timestamp_buffer = []
     # Secs
-    timestamp_buffer.append(secsOfDay >> 10)
+    timestamp_buffer.append(secs_of_day >> 10)
     if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
         timestamp_buffer.append(ESCAPE_BYTE)
-    secsOfDay = secsOfDay - (timestamp_buffer[len(timestamp_buffer) - 1] << 10)
-    timestamp_buffer.append(secsOfDay >> 2)
+    secs_of_day = secs_of_day - (timestamp_buffer[len(timestamp_buffer) - 1] << 10)
+    timestamp_buffer.append(secs_of_day >> 2)
     if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
         timestamp_buffer.append(ESCAPE_BYTE)
-    secsOfDay = secsOfDay - (timestamp_buffer[len(timestamp_buffer) - 1]  << 2)
-    byte2= secsOfDay << 6
+    secs_of_day = secs_of_day - (timestamp_buffer[len(timestamp_buffer) - 1]  << 2)
+    byte2= secs_of_day << 6
     # Nanos
-    timestamp_buffer.append(byte2 + (nanosOfSec >> 24))
+    timestamp_buffer.append(byte2 + (nanos_of_sec >> 24))
     if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
         timestamp_buffer.append(ESCAPE_BYTE)
-    nanosOfSec = nanosOfSec - ((timestamp_buffer[len(timestamp_buffer) - 1] & 0x3f) << 24)
-    timestamp_buffer.append(nanosOfSec >> 16)
+    nanos_of_sec = nanos_of_sec - ((timestamp_buffer[len(timestamp_buffer) - 1] & 0x3f) << 24)
+    timestamp_buffer.append(nanos_of_sec >> 16)
     if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
         timestamp_buffer.append(ESCAPE_BYTE)
-    nanosOfSec = nanosOfSec - (timestamp_buffer[len(timestamp_buffer) - 1] << 16)
-    timestamp_buffer.append(nanosOfSec >> 8)
+    nanos_of_sec = nanos_of_sec - (timestamp_buffer[len(timestamp_buffer) - 1] << 16)
+    timestamp_buffer.append(nanos_of_sec >> 8)
     if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
         timestamp_buffer.append(ESCAPE_BYTE)
-    nanosOfSec = nanosOfSec - (timestamp_buffer[len(timestamp_buffer) - 1] << 8)
-    timestamp_buffer.append(nanosOfSec)
+    nanos_of_sec = nanos_of_sec - (timestamp_buffer[len(timestamp_buffer) - 1] << 8)
+    timestamp_buffer.append(nanos_of_sec)
     if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
         timestamp_buffer.append(ESCAPE_BYTE)
     return timestamp_buffer
