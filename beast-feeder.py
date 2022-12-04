@@ -192,6 +192,7 @@ def process_recv_bytes(recv_bytes):
         buffer_index = 2
 
 def get_new_timestamped_message(message):
+    """ Insert the system time as timestamp and return the mew message """
     timestamp_buffer = get_timestamp_buffer()
      # Find timestamp begin and end index
     index = TIMESTAMP_INDEX
@@ -219,7 +220,7 @@ def get_new_timestamped_message(message):
     return new_message
         
 def get_timestamp_buffer():
-    """ Insert the system time as timestamp """
+    """ Build and return an actual timestamp buffer """
    # Get actual time values
     now = datetime.datetime.now()
     midnight = datetime.datetime.combine(now.date(), datetime.time())
