@@ -8,11 +8,12 @@ import signal
 import socket
 import sys
 import functools
+import datetime
 # --------------
 
 # TITLE ---------------------------
 BUILD_MAJOR = '11'
-BUILD_DATE = '221203' # this is the fall-back date for versioning
+BUILD_DATE = '221204' # this is the fall-back date for versioning
 BUILD_MINOR = '02'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
@@ -33,6 +34,8 @@ MSG_TYPE_1 = 0x31
 MSG_TYPE_2 = 0x32
 MSG_TYPE_3 = 0x33
 MSG_TYPE_4 = 0x34
+TIMESTAMP_LEN = 6
+TIMESTAMP_INDEX_BEGIN = 2
 # Buffer
 BUFFER_SIZE = 64
 # ----------------------------
@@ -180,12 +183,62 @@ def process_recv_bytes(recv_bytes):
         message = buffer[0:buffer_index - 2]
         # Send message
         if msg_is_valid(message):
+            if gps_avail == False:
+                message = insert_timestamp_in_message(message)
             send_to_destination(message)
         # Reset buffer
         buffer[0] = buffer[buffer_index - 2]
         buffer[1] = buffer[buffer_index - 1]
         buffer_index = 2
 
+def insert_timestamp_in_message(message):
+     # Find timestamp begin and end index
+    index = TIMESTAMP_INDEX_BEGIN
+    counter = 0
+    while counter < TIMESTAMP_LEN:
+        if message[index] == ESCAPE_BYTE:
+            index += 1
+        index +=1
+        counter += 1
+    timestampIndexEnd = index
+
+def get_timestamp_buffer():
+    """ Insert the system time as timestamp """
+   # Get actual time values
+    now = datetime.datetime.now()
+    midnight = datetime.datetime.combine(now.date(), datetime.time())
+    secsOfDay = (now - midnight).seconds
+    nanosOfSec = now.microsecond * 1000
+    # Build timestamp
+    timestamp_buffer = []
+    # Secs
+    timestamp_buffer.append(secsOfDay >> 10)
+    if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
+        timestamp_buffer.append(ESCAPE_BYTE)
+    secsOfDay = secsOfDay - (timestamp_buffer[len(timestamp_buffer) - 1] << 10)
+    timestamp_buffer.append(secsOfDay >> 2)
+    if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
+        timestamp_buffer.append(ESCAPE_BYTE)
+    secsOfDay = secsOfDay - (timestamp_buffer[len(timestamp_buffer) - 1]  << 2)
+    byte2= secsOfDay << 6
+    # Nanos
+    timestamp_buffer.append(byte2 + (nanosOfSec >> 24))
+    if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
+        timestamp_buffer.append(ESCAPE_BYTE)
+    nanosOfSec = nanosOfSec - ((timestamp_buffer[len(timestamp_buffer) - 1] & 0x3f) << 24)
+    timestamp_buffer.append(nanosOfSec >> 16)
+    if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
+        timestamp_buffer.append(ESCAPE_BYTE)
+    nanosOfSec = nanosOfSec - (timestamp_buffer[len(timestamp_buffer) - 1] << 16)
+    timestamp_buffer.append(nanosOfSec >> 8)
+    if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
+        timestamp_buffer.append(ESCAPE_BYTE)
+    nanosOfSec = nanosOfSec - (timestamp_buffer[len(timestamp_buffer) - 1] << 8)
+    timestamp_buffer.append(nanosOfSec)
+    if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
+        timestamp_buffer.append(ESCAPE_BYTE)
+    return timestamp_buffer
+    
 def listen_to_receiver():
     """ Listen for incoming bytes from the Receiver """
     print('Start listening...')
