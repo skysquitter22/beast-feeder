@@ -12,9 +12,9 @@ import datetime
 # --------------
 
 # TITLE ---------------------------
-BUILD_MAJOR = '11'
+BUILD_MAJOR = '12'
 BUILD_DATE = '221204' # this is the fall-back date for versioning
-BUILD_MINOR = '02'
+BUILD_MINOR = '01'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
 # ---------------------------------
