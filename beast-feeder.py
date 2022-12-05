@@ -13,7 +13,7 @@ import datetime
 
 # TITLE ---------------------------
 BUILD_MAJOR = '13'
-BUILD_DATE = '221205' # this is the fall-back date for versioning
+BUILD_DATE = '221206' # this is the fall-back date for versioning
 BUILD_MINOR = '01'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
@@ -36,13 +36,12 @@ MSG_TYPE_3 = 0x33
 MSG_TYPE_4 = 0x34
 TIMESTAMP_LEN = 6
 TIMESTAMP_INDEX = 2
-# Buffer
-BUFFER_SIZE = 64
+# Polling
+RECV_BYTES_SIZE = 1
 # ----------------------------
 
 # VARIABLES ---------------------
-buffer = bytearray(BUFFER_SIZE)
-buffer_index = 0
+buffer = bytearray()
 # Set defaults
 recv_host = RECV_HOST
 recv_port = RECV_PORT
@@ -84,15 +83,14 @@ def sigterm_handler():
     shutdown_gracefully()
 
 def preamble_detected():
-    """ Return 1 if message preamble detected """
-    ## global buffer_index
-    index = buffer_index - 1
+    """ Return True if message preamble detected """
+    index = len(buffer) - 1
     # Check message type
     try:
         if buffer[index] != MSG_TYPE_1 and buffer[index] != MSG_TYPE_2 and \
                         buffer[index] != MSG_TYPE_3 and \
                         buffer[index] != MSG_TYPE_4:
-            return 0
+            return False
     except IndexError:
         # This error is almost always caused by losing the connection to the RECV_HOST.
         print("Beast-feeder is exiting - did we lose the connection to " \
@@ -105,21 +103,21 @@ def preamble_detected():
         esc_count += 1
         index -= 1
     if index == 0 and buffer[index] == ESCAPE_BYTE:
-        return 0
+        return False
     if esc_count % 2 == 0:
-        return 0
-    return 1
+        return False
+    return True
 
 def msg_is_valid(message):
-    """ Return 1 if message is to be sent; check message preamble and type;
+    """ Return True if message is to be sent; check message preamble and type;
        ESC byte at beginning required """
     if message[0] != ESCAPE_BYTE:
-        return 0
+        return False
     # Either message tyoe 2 or 3 required
     if message[1] != MSG_TYPE_2 and message[1] != MSG_TYPE_3:
-        return 0
+        return False
     # Message preamble and type is valid -> send to destination
-    return 1
+    return True
 
 def connect_to_receiver():
     """ Connect to the Receiver server via TCP"""
@@ -166,37 +164,31 @@ def send_to_destination(message):
     sock_dest.sendto(message, server_address)
 
 def process_recv_bytes(recv_bytes):
-    """ Process received byte """
-    global buffer_index         # pylint: disable=W0603
-    # Avoid buffer overflow
-    if buffer_index == BUFFER_SIZE:
-        buffer_index = 0
+    """ Process received bytes """
     # Add received data chunk to buffer
-    buffer[buffer_index:buffer_index + 1] = recv_bytes
-    buffer_index += 1
-    if buffer_index < 3:
+    buffer.extend(recv_bytes)
+    if len(buffer) < 3:
         return
     # Look for Beast preamble
     if preamble_detected():
         # Prepare received message
-        message = bytearray(buffer_index - 2)
-        message = buffer[0:buffer_index - 2]
+        message =  bytearray(buffer[0:len(buffer) - 2])
         # Send message
         if msg_is_valid(message):
             if gps_avail == False:
                 message = get_new_timestamped_message(message)
             send_to_destination(message)
-        # Reset buffer
-        buffer[0] = buffer[buffer_index - 2]
-        buffer[1] = buffer[buffer_index - 1]
-        buffer_index = 2
+        # Reset buffer and set preamble in new message buffer
+        preamble = [buffer[len(buffer) - 2], buffer[len(buffer) - 1]]
+        buffer.clear()
+        buffer.extend(preamble)
+        
 
 def listen_to_receiver():
     """ Listen for incoming bytes from the Receiver """
     print('Start listening...')
     while 1:
-        recv_bytes = bytearray(1)
-        recv_bytes = sock_recv.recv(1)
+        recv_bytes = bytearray(sock_recv.recv(RECV_BYTES_SIZE))
         process_recv_bytes(recv_bytes)
 
 def process_args():
@@ -207,6 +199,7 @@ def process_args():
     global recv_port
     global dest_host
     global dest_port
+    global gps_avail
     # Get number of arguments
     args_len = len(sys.argv) - 1
     # Set RECEIVER host
@@ -228,6 +221,7 @@ def process_args():
     print('Recv port: ' + str(recv_port))
     print('Dest host: ' + dest_host)
     print('Dest port: ' + str(dest_port))
+    print('GPS avail: ' + str(gps_avail))
     print()
     
 def get_new_timestamped_message(message):
@@ -336,4 +330,3 @@ connect_to_receiver()
 # Start worker, listening to Receiver server
 listen_to_receiver()
 # ------------------------------------------------------------------
-
