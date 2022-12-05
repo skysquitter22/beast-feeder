@@ -36,13 +36,10 @@ MSG_TYPE_3 = 0x33
 MSG_TYPE_4 = 0x34
 TIMESTAMP_LEN = 6
 TIMESTAMP_INDEX = 2
-# Buffer
-MSG_BUFFER_SIZE = 64
-TIMESTAMP_BUFFER_SIZE = 16
 # ----------------------------
 
 # VARIABLES ---------------------
-buffer = bytearray(MSG_BUFFER_SIZE)
+buffer = []
 buffer_index = 0
 # Set defaults
 recv_host = RECV_HOST
@@ -169,9 +166,6 @@ def send_to_destination(message):
 def process_recv_bytes(recv_bytes):
     """ Process received byte """
     global buffer_index         # pylint: disable=W0603
-    # Avoid buffer overflow
-    if buffer_index == MSG_BUFFER_SIZE:
-        buffer_index = 0
     # Add received data chunk to buffer
     buffer[buffer_index:buffer_index + 1] = recv_bytes
     buffer_index += 1
@@ -186,10 +180,18 @@ def process_recv_bytes(recv_bytes):
             if gps_avail == False:
                 message = get_new_timestamped_message(message)
             send_to_destination(message)
-        # Reset buffer
-        buffer[0] = buffer[buffer_index - 2]
-        buffer[1] = buffer[buffer_index - 1]
-        buffer_index = 2
+        # Reset buffer and set preamble in new message buffer
+        byte0 = buffer[buffer_index - 2]
+        byte1 = buffer[buffer_index - 1]
+        reset_buffer()
+        buffer[0] = byte0
+        buffer_index += 1
+        buffer[1] = byte1
+        buffer_index += 1
+        
+def reset_buffer():
+    buffer.clear()
+    buffer_index = 0
 
 def get_new_timestamped_message(message):
     """ Insert the system time as timestamp and return the mew message """
