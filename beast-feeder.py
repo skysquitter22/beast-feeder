@@ -14,7 +14,7 @@ import datetime
 # TITLE ---------------------------
 BUILD_MAJOR = '13'
 BUILD_DATE = '221205' # this is the fall-back date for versioning
-BUILD_MINOR = '04'
+BUILD_MINOR = '06'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
 # ---------------------------------
@@ -260,7 +260,7 @@ def listen_to_receiver():
     """ Listen for incoming bytes from the Receiver """
     print('Start listening...')
     while 1:
-        recv_bytes = bytearray([sock_recv.recv(1)])
+        recv_bytes = bytearray(sock_recv.recv(1))
         process_recv_bytes(recv_bytes)
 
 def process_args():
