@@ -37,7 +37,8 @@ MSG_TYPE_4 = 0x34
 TIMESTAMP_LEN = 6
 TIMESTAMP_INDEX = 2
 # Polling
-RECV_BYTES_SIZE = 1
+RECV_BYTES_SIZE = 1 # Byte per Byte required
+BUFFER_MIN_SIZE_REQUIRED = 9 # Save, because: Preamble + Timestamp + Signal/Unused
 # ----------------------------
 
 # VARIABLES ---------------------
@@ -84,6 +85,9 @@ def sigterm_handler():
 
 def preamble_detected():
     """ Return True if message preamble detected """
+    # Minimum buffer length required
+    if len(buffer) < BUFFER_MIN_SIZE_REQUIRED:
+        return False
     index = len(buffer) - 1
     # Check message type
     try:
@@ -167,8 +171,6 @@ def process_recv_bytes(recv_bytes):
     """ Process received bytes """
     # Add received data chunk to buffer
     buffer.extend(recv_bytes)
-    if len(buffer) < 3:
-        return
     # Look for Beast preamble
     if preamble_detected():
         # Prepare received message
@@ -201,18 +203,18 @@ def process_args():
     global dest_port
     global gps_avail
     # Get number of arguments
-    args_len = len(sys.argv) - 1
+    args_len = len(sys.argv)
     # Set RECEIVER host
-    if args_len >= 1:
+    if args_len > 1:
         recv_host = sys.argv[1]
     # Set RECEIVER port
-    if args_len >= 2:
+    if args_len > 2:
         recv_port = int(sys.argv[2])
     # Set DESTINATION host
-    if args_len >= 3:
+    if args_len > 3:
         dest_host = sys.argv[3]
     # Set DESTINATION port
-    if args_len >= 4:
+    if args_len > 4:
         dest_port = int(sys.argv[4])
     # Set GPS available
     if args_len > 5:
