@@ -14,7 +14,7 @@ import datetime
 # TITLE ---------------------------
 BUILD_MAJOR = '13'
 BUILD_DATE = '221205' # this is the fall-back date for versioning
-BUILD_MINOR = '07'
+BUILD_MINOR = '08'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
 # ---------------------------------
@@ -164,7 +164,7 @@ def send_to_destination(message):
 
 def process_recv_bytes(recv_bytes):
     """ Process received byte """
-    #global buffer_index         # pylint: disable=W0603
+    global buffer_index         # pylint: disable=W0603
     # Add received data chunk to buffer
     buffer[buffer_index:buffer_index + 1] = recv_bytes
     buffer_index += 1
