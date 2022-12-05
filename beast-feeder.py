@@ -225,7 +225,6 @@ def get_timestamp_buffer():
     # Build timestamp
     buffer = []
     byte_counter = 0
-    buffer = bytearray(TIMESTAMP_BUFFER_SIZE)
     # Secs
     buffer.append(secs_of_day >> 10)
     byte_counter += 1
