@@ -85,6 +85,7 @@ def preamble_detected():
     """ Return True if message preamble detected """
     if buffer_index < 3:
         return False
+    print('TEST')
     index = buffer_index - 1
     # Check message type
     try:
