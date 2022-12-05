@@ -14,7 +14,7 @@ import datetime
 # TITLE ---------------------------
 BUILD_MAJOR = '13'
 BUILD_DATE = '221205' # this is the fall-back date for versioning
-BUILD_MINOR = '02'
+BUILD_MINOR = '01'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
 # ---------------------------------
@@ -307,6 +307,7 @@ def strIsTrue(str):
 print()
 print(TITLE)
 print('build ' + BUILD)
+print('TEST 1')
 print()
 
 # Process start arguments
