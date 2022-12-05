@@ -14,7 +14,7 @@ import datetime
 # TITLE ---------------------------
 BUILD_MAJOR = '13'
 BUILD_DATE = '221205' # this is the fall-back date for versioning
-BUILD_MINOR = '01'
+BUILD_MINOR = '02'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
 # ---------------------------------
@@ -83,9 +83,6 @@ def sigterm_handler():
 
 def preamble_detected():
     """ Return True if message preamble detected """
-    if buffer_index < 3:
-        return False
-    print('TEST')
     index = buffer_index - 1
     # Check message type
     try:
@@ -167,7 +164,7 @@ def send_to_destination(message):
 
 def process_recv_bytes(recv_bytes):
     """ Process received byte """
-    global buffer_index         # pylint: disable=W0603
+    #global buffer_index         # pylint: disable=W0603
     # Add received data chunk to buffer
     buffer[buffer_index:buffer_index + 1] = recv_bytes
     buffer_index += 1
