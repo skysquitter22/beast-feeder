@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
 # pylint: disable=C0103,C0114,C0112,C0116,W1514,W0702
 
-""" beast-feeder.py <recv_host> <recv_port> <dest_host> <dest_port> """
+""" beast-feeder.py <recv_host> <recv_port> <dest_host> <dest_port> <gps_avail> """
 
 # LIBS ---------
 import signal
 import socket
 import sys
 import functools
+import datetime
 # --------------
 
 # TITLE ---------------------------
-BUILD_MAJOR = '11'
-BUILD_DATE = '220806' # this is the fall-back date for versioning
-BUILD_MINOR = '02'
+BUILD_MAJOR = '13'
+BUILD_DATE = '221205' # this is the fall-back date for versioning
+BUILD_MINOR = '11'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
 # ---------------------------------
@@ -32,6 +33,8 @@ MSG_TYPE_1 = 0x31
 MSG_TYPE_2 = 0x32
 MSG_TYPE_3 = 0x33
 MSG_TYPE_4 = 0x34
+TIMESTAMP_LEN = 6
+TIMESTAMP_INDEX = 2
 # Buffer
 BUFFER_SIZE = 64
 # ----------------------------
@@ -178,11 +181,86 @@ def process_recv_bytes(recv_bytes):
         message = buffer[0:buffer_index - 2]
         # Send message
         if msg_is_valid(message):
+            if gps_avail == False:
+                message = get_new_timestamped_message(message)
             send_to_destination(message)
         # Reset buffer
         buffer[0] = buffer[buffer_index - 2]
         buffer[1] = buffer[buffer_index - 1]
         buffer_index = 2
+
+def get_new_timestamped_message(message):
+    """ Insert the system time as timestamp and return the mew message """
+    timestamp_buffer = get_timestamp_buffer()
+     # Find timestamp begin and end index
+    index = TIMESTAMP_INDEX
+    counter = 0
+    while counter < TIMESTAMP_LEN:
+        if message[index] == ESCAPE_BYTE:
+            index += 1
+        index +=1
+        counter += 1
+    signalIndex = index
+    # Create new message
+    new_message_len = 2 + len(timestamp_buffer) + len(message[signalIndex:])
+    new_message = bytearray(new_message_len)
+    # Preamble
+    new_message.extend(message[0:2])
+    # New timestamp
+    new_message.extend(timestamp_buffer)
+    # Remaining orginal message
+    new_message.extend(message[signalIndex:])
+    return new_message
+        
+def get_timestamp_buffer():
+    """ Build and return an actual timestamp buffer """
+   # Get actual time values
+    now = datetime.datetime.now()
+    midnight = datetime.datetime.combine(now.date(), datetime.time())
+    secs_of_day = (now - midnight).seconds
+    nanos_of_sec = now.microsecond * 1000
+    # Build timestamp
+    buffer = []
+    byte_counter = 0
+    # Secs
+    buffer.append(secs_of_day >> 10)
+    byte_counter += 1
+    if buffer[len(buffer) - 1] == ESCAPE_BYTE:
+        buffer.append(ESCAPE_BYTE)
+        byte_counter += 1
+    secs_of_day = secs_of_day - (buffer[len(buffer) - 1] << 10)
+    buffer.append(secs_of_day >> 2)
+    byte_counter += 1
+    if buffer[len(buffer) - 1] == ESCAPE_BYTE:
+        buffer.append(ESCAPE_BYTE)
+        byte_counter += 1
+    secs_of_day = secs_of_day - (buffer[len(buffer) - 1]  << 2)
+    byte2= secs_of_day << 6
+    # Nanos
+    buffer.append(byte2 + (nanos_of_sec >> 24))
+    byte_counter += 1
+    if buffer[len(buffer) - 1] == ESCAPE_BYTE:
+        buffer.append(ESCAPE_BYTE)
+        byte_counter += 1
+    nanos_of_sec = nanos_of_sec - ((buffer[len(buffer) - 1] & 0x3f) << 24)
+    buffer.append(nanos_of_sec >> 16)
+    byte_counter += 1
+    if buffer[len(buffer) - 1] == ESCAPE_BYTE:
+        buffer.append(ESCAPE_BYTE)
+        byte_counter += 1
+    nanos_of_sec = nanos_of_sec - (buffer[len(buffer) - 1] << 16)
+    buffer.append(nanos_of_sec >> 8)
+    byte_counter += 1
+    if buffer[len(buffer) - 1] == ESCAPE_BYTE:
+        buffer.append(ESCAPE_BYTE)
+        byte_counter += 1
+    nanos_of_sec = nanos_of_sec - (buffer[len(buffer) - 1] << 8)
+    buffer.append(nanos_of_sec)
+    byte_counter += 1
+    if buffer[len(buffer) - 1] == ESCAPE_BYTE:
+        buffer.append(ESCAPE_BYTE)
+        byte_counter += 1
+    return bytearray(buffer[0:byte_counter])
 
 def listen_to_receiver():
     """ Listen for incoming bytes from the Receiver """
@@ -200,6 +278,7 @@ def process_args():
     global recv_port
     global dest_host
     global dest_port
+    global gps_avail
     # Get number of arguments
     args_len = len(sys.argv) - 1
     # Set RECEIVER host
@@ -214,11 +293,18 @@ def process_args():
     # Set DESTINATION port
     if args_len >= 4:
         dest_port = int(sys.argv[4])
+    # Set GPS available
+    if args_len > 5:
+        gps_avail = strIsTrue(sys.argv[5])
     print('Recv host: ' + recv_host)
     print('Recv port: ' + str(recv_port))
     print('Dest host: ' + dest_host)
     print('Dest port: ' + str(dest_port))
+    print('GPS avail: ' + str(gps_avail))
     print()
+    
+def strIsTrue(str):
+    return str.lower() in ('true', '1', 'yes', 'y')
 # ------------------------------------------------------------------
 
 # EXECUTE ----------------------------------------------------------
