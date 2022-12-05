@@ -237,8 +237,7 @@ def get_new_timestamped_message(message):
         counter += 1
     signalIndex = index
     # Create new message
-    new_message_len = 2 + len(timestamp_buffer) + len(message[signalIndex:])
-    new_message = bytearray(new_message_len)
+    new_message = bytearray()
     # Preamble
     new_message.extend(message[0:2])
     # New timestamp
@@ -255,47 +254,34 @@ def get_timestamp_buffer():
     secs_of_day = (now - midnight).seconds
     nanos_of_sec = now.microsecond * 1000
     # Build timestamp
-    buffer = []
-    byte_counter = 0
+    timestamp_buffer = bytearray()
     # Secs
-    buffer.append(secs_of_day >> 10)
-    byte_counter += 1
-    if buffer[len(buffer) - 1] == ESCAPE_BYTE:
-        buffer.append(ESCAPE_BYTE)
-        byte_counter += 1
-    secs_of_day = secs_of_day - (buffer[len(buffer) - 1] << 10)
-    buffer.append(secs_of_day >> 2)
-    byte_counter += 1
-    if buffer[len(buffer) - 1] == ESCAPE_BYTE:
-        buffer.append(ESCAPE_BYTE)
-        byte_counter += 1
-    secs_of_day = secs_of_day - (buffer[len(buffer) - 1]  << 2)
+    timestamp_buffer.append(secs_of_day >> 10)
+    if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
+        timestamp_buffer.append(ESCAPE_BYTE)
+    secs_of_day = secs_of_day - (timestamp_buffer[len(timestamp_buffer) - 1] << 10)
+    timestamp_buffer.append(secs_of_day >> 2)
+    if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
+        timestamp_buffer.append(ESCAPE_BYTE)
+    secs_of_day = secs_of_day - (timestamp_buffer[len(timestamp_buffer) - 1]  << 2)
     byte2= secs_of_day << 6
     # Nanos
-    buffer.append(byte2 + (nanos_of_sec >> 24))
-    byte_counter += 1
-    if buffer[len(buffer) - 1] == ESCAPE_BYTE:
-        buffer.append(ESCAPE_BYTE)
-        byte_counter += 1
-    nanos_of_sec = nanos_of_sec - ((buffer[len(buffer) - 1] & 0x3f) << 24)
-    buffer.append(nanos_of_sec >> 16)
-    byte_counter += 1
-    if buffer[len(buffer) - 1] == ESCAPE_BYTE:
-        buffer.append(ESCAPE_BYTE)
-        byte_counter += 1
-    nanos_of_sec = nanos_of_sec - (buffer[len(buffer) - 1] << 16)
-    buffer.append(nanos_of_sec >> 8)
-    byte_counter += 1
-    if buffer[len(buffer) - 1] == ESCAPE_BYTE:
-        buffer.append(ESCAPE_BYTE)
-        byte_counter += 1
-    nanos_of_sec = nanos_of_sec - (buffer[len(buffer) - 1] << 8)
-    buffer.append(nanos_of_sec)
-    byte_counter += 1
-    if buffer[len(buffer) - 1] == ESCAPE_BYTE:
-        buffer.append(ESCAPE_BYTE)
-        byte_counter += 1
-    return bytearray(buffer[0:byte_counter])
+    timestamp_buffer.append(byte2 + (nanos_of_sec >> 24))
+    if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
+        timestamp_buffer.append(ESCAPE_BYTE)
+    nanos_of_sec = nanos_of_sec - ((timestamp_buffer[len(timestamp_buffer) - 1] & 0x3f) << 24)
+    timestamp_buffer.append(nanos_of_sec >> 16)
+    if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
+        timestamp_buffer.append(ESCAPE_BYTE)
+    nanos_of_sec = nanos_of_sec - (timestamp_buffer[len(timestamp_buffer) - 1] << 16)
+    timestamp_buffer.append(nanos_of_sec >> 8)
+    if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
+        timestamp_buffer.append(ESCAPE_BYTE)
+    nanos_of_sec = nanos_of_sec - (timestamp_buffer[len(timestamp_buffer) - 1] << 8)
+    timestamp_buffer.append(nanos_of_sec)
+    if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
+        timestamp_buffer.append(ESCAPE_BYTE)
+    return timestamp_buffer
     
 def strIsTrue(str):
     return str.lower() in ('true', '1', 'yes', 'y')
