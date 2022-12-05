@@ -227,7 +227,7 @@ def process_args():
     print('Dest port: ' + str(dest_port))
     print()
     
-    def get_new_timestamped_message(message):
+def get_new_timestamped_message(message):
     """ Insert the system time as timestamp and return the mew message """
     timestamp_buffer = get_timestamp_buffer()
      # Find timestamp begin and end index
