@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 # pylint: disable=C0103,C0114,C0112,C0116,W1514,W0702
 
-""" beast-feeder.py <recv_host> <recv_port> <dest_host> <dest_port> """
+""" beast-feeder.py <recv_host> <recv_port> <dest_host> <dest_port> <gps_avail> """
 
 # LIBS ---------
 import signal
 import socket
 import sys
 import functools
+import datetime
 # --------------
 
 # TITLE ---------------------------
@@ -23,6 +24,7 @@ RECV_HOST = 'readsb'
 RECV_PORT = 30005
 DEST_HOST = '10.9.2.1'
 DEST_PORT = 11092
+GPS_AVAIL = False
 # ----------------------------
 
 # CONSTANTS ------------------
@@ -32,6 +34,8 @@ MSG_TYPE_1 = 0x31
 MSG_TYPE_2 = 0x32
 MSG_TYPE_3 = 0x33
 MSG_TYPE_4 = 0x34
+TIMESTAMP_LEN = 6
+TIMESTAMP_INDEX = 2
 # Buffer
 BUFFER_SIZE = 64
 # ----------------------------
@@ -44,6 +48,7 @@ recv_host = RECV_HOST
 recv_port = RECV_PORT
 dest_host = DEST_HOST
 dest_port = DEST_PORT
+gps_avail = GPS_AVAIL
 # -------------------------------
 
 # ensure print always flushes the buffer:
@@ -178,6 +183,8 @@ def process_recv_bytes(recv_bytes):
         message = buffer[0:buffer_index - 2]
         # Send message
         if msg_is_valid(message):
+            if gps_avail == False:
+                message = get_new_timestamped_message(message)
             send_to_destination(message)
         # Reset buffer
         buffer[0] = buffer[buffer_index - 2]
@@ -219,6 +226,79 @@ def process_args():
     print('Dest host: ' + dest_host)
     print('Dest port: ' + str(dest_port))
     print()
+    
+    def get_new_timestamped_message(message):
+    """ Insert the system time as timestamp and return the mew message """
+    timestamp_buffer = get_timestamp_buffer()
+     # Find timestamp begin and end index
+    index = TIMESTAMP_INDEX
+    counter = 0
+    while counter < TIMESTAMP_LEN:
+        if message[index] == ESCAPE_BYTE:
+            index += 1
+        index +=1
+        counter += 1
+    signalIndex = index
+    # Create new message
+    new_message_len = 2 + len(timestamp_buffer) + len(message[signalIndex:])
+    new_message = bytearray(new_message_len)
+    # Preamble
+    new_message.extend(message[0:2])
+    # New timestamp
+    new_message.extend(timestamp_buffer)
+    # Remaining orginal message
+    new_message.extend(message[signalIndex:])
+    return new_message
+        
+def get_timestamp_buffer():
+    """ Build and return an actual timestamp buffer """
+   # Get actual time values
+    now = datetime.datetime.now()
+    midnight = datetime.datetime.combine(now.date(), datetime.time())
+    secs_of_day = (now - midnight).seconds
+    nanos_of_sec = now.microsecond * 1000
+    # Build timestamp
+    buffer = []
+    byte_counter = 0
+    # Secs
+    buffer.append(secs_of_day >> 10)
+    byte_counter += 1
+    if buffer[len(buffer) - 1] == ESCAPE_BYTE:
+        buffer.append(ESCAPE_BYTE)
+        byte_counter += 1
+    secs_of_day = secs_of_day - (buffer[len(buffer) - 1] << 10)
+    buffer.append(secs_of_day >> 2)
+    byte_counter += 1
+    if buffer[len(buffer) - 1] == ESCAPE_BYTE:
+        buffer.append(ESCAPE_BYTE)
+        byte_counter += 1
+    secs_of_day = secs_of_day - (buffer[len(buffer) - 1]  << 2)
+    byte2= secs_of_day << 6
+    # Nanos
+    buffer.append(byte2 + (nanos_of_sec >> 24))
+    byte_counter += 1
+    if buffer[len(buffer) - 1] == ESCAPE_BYTE:
+        buffer.append(ESCAPE_BYTE)
+        byte_counter += 1
+    nanos_of_sec = nanos_of_sec - ((buffer[len(buffer) - 1] & 0x3f) << 24)
+    buffer.append(nanos_of_sec >> 16)
+    byte_counter += 1
+    if buffer[len(buffer) - 1] == ESCAPE_BYTE:
+        buffer.append(ESCAPE_BYTE)
+        byte_counter += 1
+    nanos_of_sec = nanos_of_sec - (buffer[len(buffer) - 1] << 16)
+    buffer.append(nanos_of_sec >> 8)
+    byte_counter += 1
+    if buffer[len(buffer) - 1] == ESCAPE_BYTE:
+        buffer.append(ESCAPE_BYTE)
+        byte_counter += 1
+    nanos_of_sec = nanos_of_sec - (buffer[len(buffer) - 1] << 8)
+    buffer.append(nanos_of_sec)
+    byte_counter += 1
+    if buffer[len(buffer) - 1] == ESCAPE_BYTE:
+        buffer.append(ESCAPE_BYTE)
+        byte_counter += 1
+    return bytearray(buffer[0:byte_counter])
 # ------------------------------------------------------------------
 
 # EXECUTE ----------------------------------------------------------
