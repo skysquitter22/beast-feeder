@@ -83,7 +83,8 @@ def sigterm_handler():
 
 def preamble_detected():
     """ Return True if message preamble detected """
-    ## global buffer_index
+    if buffer_index < 3:
+        return False
     index = buffer_index - 1
     # Check message type
     try:
@@ -169,8 +170,6 @@ def process_recv_bytes(recv_bytes):
     # Add received data chunk to buffer
     buffer[buffer_index:buffer_index + 1] = recv_bytes
     buffer_index += 1
-    if buffer_index < 3:
-        return
     # Look for Beast preamble
     if preamble_detected():
         # Prepare received message
@@ -181,13 +180,10 @@ def process_recv_bytes(recv_bytes):
                 message = get_new_timestamped_message(message)
             send_to_destination(message)
         # Reset buffer and set preamble in new message buffer
-        byte0 = buffer[buffer_index - 2]
-        byte1 = buffer[buffer_index - 1]
+        preamble = [buffer[buffer_index - 2], buffer[buffer_index - 1]]
         reset_buffer()
-        buffer[0] = byte0
-        buffer_index += 1
-        buffer[1] = byte1
-        buffer_index += 1
+        buffer.extend(preamble)
+        buffer_index += len(preamble)
         
 def reset_buffer():
     buffer.clear()
