@@ -14,7 +14,7 @@ import datetime
 # TITLE ---------------------------
 BUILD_MAJOR = '13'
 BUILD_DATE = '221205' # this is the fall-back date for versioning
-BUILD_MINOR = '10'
+BUILD_MINOR = '11'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
 # ---------------------------------
@@ -36,6 +36,8 @@ MSG_TYPE_3 = 0x33
 MSG_TYPE_4 = 0x34
 TIMESTAMP_LEN = 6
 TIMESTAMP_INDEX = 2
+# Buffer
+BUFFER_SIZE = 64
 # ----------------------------
 
 # VARIABLES ---------------------
@@ -255,7 +257,7 @@ def get_timestamp_buffer():
         buffer.append(ESCAPE_BYTE)
         byte_counter += 1
     return bytearray(buffer[0:byte_counter])
-    
+
 def listen_to_receiver():
     """ Listen for incoming bytes from the Receiver """
     print('Start listening...')
