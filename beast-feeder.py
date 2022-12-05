@@ -181,17 +181,10 @@ def process_recv_bytes(recv_bytes):
                 message = get_new_timestamped_message(message)
             send_to_destination(message)
         # Reset buffer and set preamble in new message buffer
-        byte0 = buffer[buffer_index - 2]
-        byte1 = buffer[buffer_index - 1]
-        reset_buffer()
-        buffer[0] = byte0
-        buffer_index += 1
-        buffer[1] = byte1
-        buffer_index += 1
-        
-def reset_buffer():
-    buffer.clear()
-    buffer_index = 0
+        preamble = [buffer[buffer_index - 2], buffer[buffer_index - 1]]
+        buffer.clear()
+        buffer.extend(preamble)
+        buffer_index = len(preamble)   
 
 def get_new_timestamped_message(message):
     """ Insert the system time as timestamp and return the mew message """
