@@ -180,8 +180,7 @@ def process_recv_bytes(recv_bytes):
     # Look for Beast preamble
     if preamble_detected():
         # Prepare received message
-        message = bytearray(buffer_index - 2)
-        message = buffer[0:buffer_index - 2]
+        message = bytearray(buffer[0:buffer_index - 2])
         # Send message
         if msg_is_valid(message):
             if gps_avail == False:
