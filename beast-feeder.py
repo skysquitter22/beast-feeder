@@ -221,6 +221,9 @@ def process_args():
     # Set DESTINATION port
     if args_len >= 4:
         dest_port = int(sys.argv[4])
+    # Set GPS available
+    if args_len > 5:
+        gps_avail = strIsTrue(sys.argv[5])
     print('Recv host: ' + recv_host)
     print('Recv port: ' + str(recv_port))
     print('Dest host: ' + dest_host)
@@ -299,6 +302,9 @@ def get_timestamp_buffer():
         buffer.append(ESCAPE_BYTE)
         byte_counter += 1
     return bytearray(buffer[0:byte_counter])
+    
+def strIsTrue(str):
+    return str.lower() in ('true', '1', 'yes', 'y')
 # ------------------------------------------------------------------
 
 # EXECUTE ----------------------------------------------------------
