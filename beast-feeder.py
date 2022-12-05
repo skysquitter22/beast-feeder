@@ -13,7 +13,7 @@ import datetime
 
 # TITLE ---------------------------
 BUILD_MAJOR = '12'
-BUILD_DATE = '221204' # this is the fall-back date for versioning
+BUILD_DATE = '221205' # this is the fall-back date for versioning
 BUILD_MINOR = '01'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
@@ -223,47 +223,48 @@ def get_timestamp_buffer():
     secs_of_day = (now - midnight).seconds
     nanos_of_sec = now.microsecond * 1000
     # Build timestamp
+    buffer = []
     byte_counter = 0
-    timestamp_buffer = bytearray(TIMESTAMP_BUFFER_SIZE)
+    buffer = bytearray(TIMESTAMP_BUFFER_SIZE)
     # Secs
-    timestamp_buffer.append(secs_of_day >> 10)
+    buffer.append(secs_of_day >> 10)
     byte_counter += 1
-    if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
-        timestamp_buffer.append(ESCAPE_BYTE)
+    if buffer[len(buffer) - 1] == ESCAPE_BYTE:
+        buffer.append(ESCAPE_BYTE)
         byte_counter += 1
-    secs_of_day = secs_of_day - (timestamp_buffer[len(timestamp_buffer) - 1] << 10)
-    timestamp_buffer.append(secs_of_day >> 2)
+    secs_of_day = secs_of_day - (buffer[len(buffer) - 1] << 10)
+    buffer.append(secs_of_day >> 2)
     byte_counter += 1
-    if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
-        timestamp_buffer.append(ESCAPE_BYTE)
+    if buffer[len(buffer) - 1] == ESCAPE_BYTE:
+        buffer.append(ESCAPE_BYTE)
         byte_counter += 1
-    secs_of_day = secs_of_day - (timestamp_buffer[len(timestamp_buffer) - 1]  << 2)
+    secs_of_day = secs_of_day - (buffer[len(buffer) - 1]  << 2)
     byte2= secs_of_day << 6
     # Nanos
-    timestamp_buffer.append(byte2 + (nanos_of_sec >> 24))
+    buffer.append(byte2 + (nanos_of_sec >> 24))
     byte_counter += 1
-    if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
-        timestamp_buffer.append(ESCAPE_BYTE)
+    if buffer[len(buffer) - 1] == ESCAPE_BYTE:
+        buffer.append(ESCAPE_BYTE)
         byte_counter += 1
-    nanos_of_sec = nanos_of_sec - ((timestamp_buffer[len(timestamp_buffer) - 1] & 0x3f) << 24)
-    timestamp_buffer.append(nanos_of_sec >> 16)
+    nanos_of_sec = nanos_of_sec - ((buffer[len(buffer) - 1] & 0x3f) << 24)
+    buffer.append(nanos_of_sec >> 16)
     byte_counter += 1
-    if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
-        timestamp_buffer.append(ESCAPE_BYTE)
+    if buffer[len(buffer) - 1] == ESCAPE_BYTE:
+        buffer.append(ESCAPE_BYTE)
         byte_counter += 1
-    nanos_of_sec = nanos_of_sec - (timestamp_buffer[len(timestamp_buffer) - 1] << 16)
-    timestamp_buffer.append(nanos_of_sec >> 8)
+    nanos_of_sec = nanos_of_sec - (buffer[len(buffer) - 1] << 16)
+    buffer.append(nanos_of_sec >> 8)
     byte_counter += 1
-    if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
-        timestamp_buffer.append(ESCAPE_BYTE)
+    if buffer[len(buffer) - 1] == ESCAPE_BYTE:
+        buffer.append(ESCAPE_BYTE)
         byte_counter += 1
-    nanos_of_sec = nanos_of_sec - (timestamp_buffer[len(timestamp_buffer) - 1] << 8)
-    timestamp_buffer.append(nanos_of_sec)
+    nanos_of_sec = nanos_of_sec - (buffer[len(buffer) - 1] << 8)
+    buffer.append(nanos_of_sec)
     byte_counter += 1
-    if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
-        timestamp_buffer.append(ESCAPE_BYTE)
+    if buffer[len(buffer) - 1] == ESCAPE_BYTE:
+        buffer.append(ESCAPE_BYTE)
         byte_counter += 1
-    return timestamp_buffer[0:byte_counter]
+    return bytearray(buffer[0:byte_counter])
     
 def listen_to_receiver():
     """ Listen for incoming bytes from the Receiver """
