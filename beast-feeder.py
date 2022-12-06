@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# pylint: disable=C0103,C0114,C0112,C0116,W1514,W0702
+# pylint: disable=C0103,C0114,C0112,C0116,W1514,W0702,W0622
 
 """ beast-feeder.py <recv_host> <recv_port> <dest_host> <dest_port> <set_timestamp> """
 
@@ -184,7 +184,6 @@ def process_recv_bytes(recv_bytes):
         preamble = [buffer[len(buffer) - 2], buffer[len(buffer) - 1]]
         buffer.clear()
         buffer.extend(preamble)
-        
 
 def listen_to_receiver():
     """ Listen for incoming bytes from the Receiver """
@@ -225,7 +224,7 @@ def process_args():
     print('Dest port: ' + str(dest_port))
     print('Set Timestamp: ' + str(set_timestamp))
     print()
-    
+
 def get_new_timestamped_message(message):
     """ Insert the system time as timestamp and return the mew message """
     timestamp_buffer = get_timestamp_buffer()
@@ -247,7 +246,7 @@ def get_new_timestamped_message(message):
     # Remaining orginal message
     new_message.extend(message[signalIndex:])
     return new_message
-        
+
 def get_timestamp_buffer():
     """ Build and return an actual timestamp buffer """
    # Get actual time values
@@ -284,7 +283,7 @@ def get_timestamp_buffer():
     if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
         timestamp_buffer.append(ESCAPE_BYTE)
     return timestamp_buffer
-    
+
 def strIsTrue(str):
     return str.lower() in ('true', '1', 'yes', 'y')
 # ------------------------------------------------------------------
