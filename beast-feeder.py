@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # pylint: disable=C0103,C0114,C0112,C0116,W1514,W0702
 
-""" beast-feeder.py <recv_host> <recv_port> <dest_host> <dest_port> <gps_avail> """
+""" beast-feeder.py <recv_host> <recv_port> <dest_host> <dest_port> <set_timestamp> """
 
 # LIBS ---------
 import signal
@@ -24,7 +24,7 @@ RECV_HOST = 'readsb'
 RECV_PORT = 30005
 DEST_HOST = '10.9.2.1'
 DEST_PORT = 11092
-GPS_AVAIL = False
+SET_TIMESTAMP = False
 # ----------------------------
 
 # CONSTANTS ------------------
@@ -48,7 +48,7 @@ recv_host = RECV_HOST
 recv_port = RECV_PORT
 dest_host = DEST_HOST
 dest_port = DEST_PORT
-gps_avail = GPS_AVAIL
+set_timestamp = SET_TIMESTAMP
 # -------------------------------
 
 # ensure print always flushes the buffer:
@@ -177,7 +177,7 @@ def process_recv_bytes(recv_bytes):
         message =  bytearray(buffer[0:len(buffer) - 2])
         # Send message
         if msg_is_valid(message):
-            if gps_avail == False:
+            if set_timestamp:
                 message = get_new_timestamped_message(message)
             send_to_destination(message)
         # Reset buffer and set preamble in new message buffer
@@ -201,7 +201,7 @@ def process_args():
     global recv_port
     global dest_host
     global dest_port
-    global gps_avail
+    global set_timestamp
     # Get number of arguments
     args_len = len(sys.argv)
     # Set RECEIVER host
@@ -218,12 +218,12 @@ def process_args():
         dest_port = int(sys.argv[4])
     # Set GPS available
     if args_len > 5:
-        gps_avail = strIsTrue(sys.argv[5])
+        set_timestamp = strIsTrue(sys.argv[5])
     print('Recv host: ' + recv_host)
     print('Recv port: ' + str(recv_port))
     print('Dest host: ' + dest_host)
     print('Dest port: ' + str(dest_port))
-    print('GPS avail: ' + str(gps_avail))
+    print('Set Timestamp: ' + str(set_timestamp))
     print()
     
 def get_new_timestamped_message(message):
