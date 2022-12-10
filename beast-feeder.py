@@ -9,7 +9,6 @@ import signal
 import functools
 import time
 import datetime
-import ctypes
 import socket
 import subprocess
 # --------------
@@ -349,7 +348,7 @@ def update_clock_diff():
     if (diff1 == CLOCK_DIFF_NA and diff2 == CLOCK_DIFF_NA) or len(err) > 0:
         if err != clock_diff_error:
             print('Clock diff update error: ' + err)
-        clock_diff_error = copy(err)
+        clock_diff_error = str(err)
         return
     clock_diff_timestamp = tstmp
     clock_diff = max(abs(diff1), abs(diff2))
