@@ -184,6 +184,8 @@ def send_to_destination(message):
 
 def process_recv_bytes(recv_bytes):
     """ Process received bytes """
+    global clock_diff_is_valid
+    global clock_diff_was_valid
     # Add received data chunk to buffer
     buffer.extend(recv_bytes)
     # Look for Beast preamble
