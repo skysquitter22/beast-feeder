@@ -197,9 +197,9 @@ def process_recv_bytes(recv_bytes):
                 # Check latest clock diff
                 clock_diff_is_valid = check_clock_diff()
                 # Check for clock diff status change
-                if clock_diff_is_valid and !clock_diff_was_valid:
+                if clock_diff_is_valid and not clock_diff_was_valid:
                     print('Clock diff is valid.')
-                elif !clock_diff_is_valid and clock_diff_was_valid:
+                elif not clock_diff_is_valid and clock_diff_was_valid:
                     print('Clock diff not valid!') 
                 if clock_diff_is_valid:
                     message = get_new_timestamped_message(message)
