@@ -303,9 +303,6 @@ def check_clock_diff():
     global clock_diff_timestamp
     now = round(time.time() * 1000.0)
     age = now - clock_diff_timestamp
-    print(now)
-    print(clock_diff_timestamp)
-    print(age)
     print(CLOCK_DIFF_UPDATE_INTERVAL * 1000)
     # Update clock diff values shall be updated
     if age > CLOCK_DIFF_UPDATE_INTERVAL * 1000:
@@ -339,6 +336,7 @@ def update_clock_diff():
     err = res_chunks[3].strip()
     if (diff1 == CLOCK_DIFF_NA and diff2 == CLOCK_DIFF_NA) or len(err) > 0:
         print('Clock diff update error: ' + err)
+        print(len(err))
         return
     clock_diff_timestamp = tstmp
     clock_diff = max(abs(diff1), abs(diff2))
