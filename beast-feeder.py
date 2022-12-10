@@ -63,9 +63,12 @@ set_timestamp = SET_TIMESTAMP
 clock_diff_last_update = 0
 clock_diff_timestamp = 0
 clock_diff = CLOCK_DIFF_NA
-clock_diff_error = ''
+# Init so as to cause output on error
+clock_diff_was_valid = True
 clock_diff_is_valid = False
-clock_diff_was_valid = True # Init as 'True' to cause status change
+clock_diff_too_old = False
+clock_diff_too_bad = False
+clock_diff_error = ''
 # -------------------------------
 
 # ensure print always flushes the buffer:
@@ -321,6 +324,8 @@ def check_clock_diff():
     """ Return True if clock difference to NTP server is within the limits """
     global clock_diff_last_update
     global clock_diff_timestamp
+    global clock_diff_too_old
+    global clock_diff_too_bad
     now = round(time.time() * 1000.0)
     age_last_update = now - clock_diff_last_update
     age_clock_diff = now - clock_diff_timestamp
@@ -332,10 +337,18 @@ def check_clock_diff():
     # Check that values are within the limits
     # Check age
     if age_clock_diff > CLOCK_DIFF_VALID_PERIOD * 60000:
+        if not clock_diff_too_old:
+            print('Clock diff is too old!')
+            clock_diff_too_old = True
         return False
+    clock_diff_too_old = False
     # Check clock difference
     if clock_diff > CLOCK_DIFF_LIMIT:
+        if not clock_diff_too_bad:
+            print('Clock diff is too bad!')
+            clock_diff_too_bad = True
         return False
+    clock_diff_too_bad = False
     return True
 
 def update_clock_diff():
