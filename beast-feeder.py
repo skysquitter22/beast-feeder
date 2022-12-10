@@ -16,7 +16,7 @@ import subprocess
 # TITLE ---------------------------
 BUILD_MAJOR = '14'
 BUILD_DATE = '221210' # this is the fall-back date for versioning
-BUILD_MINOR = '02'
+BUILD_MINOR = '03'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
 # ---------------------------------
@@ -44,7 +44,7 @@ BUFFER_MIN_SIZE_REQUIRED = 9 # Save, because: Preamble + Timestamp + Signal/Unus
 # Clock check
 CLOCK_DIFF_LIMIT = 200 # [msec] Maximum allowed clock difference
 CLOCK_DIFF_UPDATE_INTERVAL = 180 # [s] Clock diff update interval
-CLOCK_DIFF_MIN_UPDATE_INTERVAL = 5 # [s] Clock diff minimum update interval
+CLOCK_DIFF_MIN_UPDATE_INTERVAL = 3 # [s] Clock diff minimum update interval
 CLOCK_DIFF_VALID_PERIOD = 30 # [mins] Clock diff value is valid for this given period
 CLOCK_DIFF_NA = 99999
 CLOCK_DIFF_CMD = 'check_clockdiff'
@@ -325,7 +325,7 @@ def check_clock_diff():
     age_last_update = now - clock_diff_last_update
     age_clock_diff = now - clock_diff_timestamp
     # Update clock diff values shall be updated
-    if age_last_update > CLOCK_DIFF_MIN_UPDATE_INTERVAL * 1000 and age_clock_diff > CLOCK_DIFF_UPDATE_INTERVAL * 1000:
+    if (clock_diff_timestamp == 0 and age_last_update > CLOCK_DIFF_MIN_UPDATE_INTERVAL * 1000) or age_clock_diff > CLOCK_DIFF_UPDATE_INTERVAL * 1000:
         update_clock_diff()
         clock_diff_last_update = now
         age_clock_diff = now - clock_diff_timestamp
