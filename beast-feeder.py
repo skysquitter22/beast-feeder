@@ -61,6 +61,9 @@ set_timestamp = SET_TIMESTAMP
 # Clock check
 clock_diff_timestamp = 0
 clock_diff = CLOCK_DIFF_NA
+clock_diff_error = ''
+clock_diff_is_valid = False
+clock_diff_was_valid = True # Init as 'True' to cause status change
 # -------------------------------
 
 # ensure print always flushes the buffer:
@@ -189,9 +192,22 @@ def process_recv_bytes(recv_bytes):
         message =  bytearray(buffer[0:len(buffer) - 2])
         # Send message
         if msg_is_valid(message):
+            # NTP system timestamp is to be set, check clock diff
             if set_timestamp:
-                message = get_new_timestamped_message(message)
-            if check_clock_diff():
+                # Check latest clock diff
+                clock_diff_is_valid = check_clock_diff()
+                # Check for clock diff status change
+                if clock_diff_is_valid and !clock_diff_was_valid:
+                    print('Clock diff is valid.')
+                elif !clock_diff_is_valid and clock_diff_was_valid:
+                    print('Clock diff not valid!') 
+                if clock_diff_is_valid:
+                    message = get_new_timestamped_message(message)
+                    send_to_destination(message)
+                # Reset status change
+                clock_diff_was_valid = clock_diff_is_valid
+            # Timestamp stays untouched, clock doesn't matter
+            else:
                 send_to_destination(message)
         # Reset buffer and set preamble in new message buffer
         preamble = [buffer[len(buffer) - 2], buffer[len(buffer) - 1]]
@@ -299,34 +315,27 @@ def get_timestamp_buffer():
 
 def check_clock_diff():
     """ Return True if clock difference to NTP server is within the limits """
-    print('CHECK')
     global clock_diff_timestamp
     now = round(time.time() * 1000.0)
     age = now - clock_diff_timestamp
-    print(CLOCK_DIFF_UPDATE_INTERVAL * 1000)
     # Update clock diff values shall be updated
     if age > CLOCK_DIFF_UPDATE_INTERVAL * 1000:
         update_clock_diff()
         age = now - clock_diff_timestamp
     # Check that values are within the limits
-    print('Age: ' + str(age))
     # Check age
     if age > CLOCK_DIFF_VALID_PERIOD * 1000:
-        print('Too old')
         return False
     # Check clock difference
-    print('Diff: ' + str(clock_diff))
     if clock_diff > CLOCK_DIFF_LIMIT:
-        print('Too bad')
         return False
-    print('OK')
     return True
 
 def update_clock_diff():
     """ Update the clock diff values by running the CLI check script """
-    print('UPDATE')
     global clock_diff_timestamp
     global clock_diff
+    global clock_diff_error
     result = subprocess.run([CLOCK_DIFF_CMD], stdout = subprocess.PIPE, text = True)
     res_str = result.stdout
     res_chunks = res_str.split(CLOCK_DIFF_RESULT_SPLIT_STR)
@@ -335,7 +344,9 @@ def update_clock_diff():
     diff2 = int(res_chunks[2].strip())
     err = res_chunks[3].replace('"', '').strip()
     if (diff1 == CLOCK_DIFF_NA and diff2 == CLOCK_DIFF_NA) or len(err) > 0:
-        print('Clock diff update error: ' + err)
+        if err != clock_diff_error:
+            print('Clock diff update error: ' + err)
+        clock_diff_error = err
         return
     clock_diff_timestamp = tstmp
     clock_diff = max(abs(diff1), abs(diff2))
