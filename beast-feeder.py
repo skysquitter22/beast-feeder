@@ -300,6 +300,7 @@ def get_timestamp_buffer():
 def check_clock_diff():
     """ Return True if clock difference to NTP server is within the limits """
     print('CHECK')
+    global clock_diff_timestamp
     now = round(time.time() * 1000.0)
     age = now - clock_diff_timestamp
     print(now)
