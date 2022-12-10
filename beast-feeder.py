@@ -9,6 +9,7 @@ import signal
 import functools
 import time
 import datetime
+import ctypes
 import socket
 import subprocess
 # --------------
@@ -80,6 +81,39 @@ else:
     BUILD = BUILD_MAJOR + '.' + EXT_BUILD_DATE.strip() + '.' + BUILD_MINOR
 
 # FUNCTIONS DEFS ---------------------------------------------------
+def process_args():
+    # pylint: disable=W0603
+    """ Parse start arguments """
+    print('Configuration:')
+    global recv_host
+    global recv_port
+    global dest_host
+    global dest_port
+    global set_timestamp
+    # Get number of arguments
+    args_len = len(sys.argv)
+    # Set RECEIVER host
+    if args_len > 1:
+        recv_host = sys.argv[1]
+    # Set RECEIVER port
+    if args_len > 2:
+        recv_port = int(sys.argv[2])
+    # Set DESTINATION host
+    if args_len > 3:
+        dest_host = sys.argv[3]
+    # Set DESTINATION port
+    if args_len > 4:
+        dest_port = int(sys.argv[4])
+    # Set GPS available
+    if args_len > 5:
+        set_timestamp = str_is_true(sys.argv[5])
+    print('Recv host: ' + recv_host)
+    print('Recv port: ' + str(recv_port))
+    print('Dest host: ' + dest_host)
+    print('Dest port: ' + str(dest_port))
+    print('Set Timestamp: ' + str(set_timestamp))
+    print()
+
 def shutdown_gracefully():
     """ Shutting down gracefully by closing the network sockets prior exit """
     print('Shutdown gracefully!')
@@ -97,46 +131,6 @@ def sigterm_handler():
     """ Handle received SIGTERM """
     print('SIGTERM received')
     shutdown_gracefully()
-
-def preamble_detected():
-    """ Return True if message preamble detected """
-    # Minimum buffer length required
-    if len(buffer) < BUFFER_MIN_SIZE_REQUIRED:
-        return False
-    index = len(buffer) - 1
-    # Check message type
-    try:
-        if buffer[index] != MSG_TYPE_1 and buffer[index] != MSG_TYPE_2 and \
-                        buffer[index] != MSG_TYPE_3 and \
-                        buffer[index] != MSG_TYPE_4:
-            return False
-    except IndexError:
-        # This error is almost always caused by losing the connection to the RECV_HOST.
-        print("Beast-feeder is exiting - did we lose the connection to " \
-                        + recv_host + ":" + str(recv_port) + "?")
-        sys.exit()
-    # Count amount of Escape bytes (has to be odd)
-    index -= 1
-    esc_count = 0
-    while index >= 0 and buffer[index] == ESCAPE_BYTE:
-        esc_count += 1
-        index -= 1
-    if index == 0 and buffer[index] == ESCAPE_BYTE:
-        return False
-    if esc_count % 2 == 0:
-        return False
-    return True
-
-def msg_is_valid(message):
-    """ Return True if message is to be sent; check message preamble and type;
-       ESC byte at beginning required """
-    if message[0] != ESCAPE_BYTE:
-        return False
-    # Either message tyoe 2 or 3 required
-    if message[1] != MSG_TYPE_2 and message[1] != MSG_TYPE_3:
-        return False
-    # Message preamble and type is valid -> send to destination
-    return True
 
 def connect_to_receiver():
     """ Connect to the Receiver server via TCP"""
@@ -177,10 +171,12 @@ def close_socket_to_destination():
     	# Execption closing UDP socket
         print('Exception while closing socket to Destination')
 
-def send_to_destination(message):
-    """ Send message to Destination via UDP """
-    server_address = (dest_host, dest_port)
-    sock_dest.sendto(message, server_address)
+def listen_to_receiver():
+    """ Listen for incoming bytes from the Receiver """
+    print('Start listening...')
+    while 1:
+        recv_bytes = bytearray(sock_recv.recv(RECV_BYTES_SIZE))
+        process_recv_bytes(recv_bytes)
 
 def process_recv_bytes(recv_bytes):
     """ Process received bytes """
@@ -216,45 +212,50 @@ def process_recv_bytes(recv_bytes):
         buffer.clear()
         buffer.extend(preamble)
 
-def listen_to_receiver():
-    """ Listen for incoming bytes from the Receiver """
-    print('Start listening...')
-    while 1:
-        recv_bytes = bytearray(sock_recv.recv(RECV_BYTES_SIZE))
-        process_recv_bytes(recv_bytes)
+def preamble_detected():
+    """ Return True if message preamble detected """
+    # Minimum buffer length required
+    if len(buffer) < BUFFER_MIN_SIZE_REQUIRED:
+        return False
+    index = len(buffer) - 1
+    # Check message type
+    try:
+        if buffer[index] != MSG_TYPE_1 and buffer[index] != MSG_TYPE_2 and \
+                        buffer[index] != MSG_TYPE_3 and \
+                        buffer[index] != MSG_TYPE_4:
+            return False
+    except IndexError:
+        # This error is almost always caused by losing the connection to the RECV_HOST.
+        print("Beast-feeder is exiting - did we lose the connection to " \
+                        + recv_host + ":" + str(recv_port) + "?")
+        sys.exit()
+    # Count amount of Escape bytes (has to be odd)
+    index -= 1
+    esc_count = 0
+    while index >= 0 and buffer[index] == ESCAPE_BYTE:
+        esc_count += 1
+        index -= 1
+    if index == 0 and buffer[index] == ESCAPE_BYTE:
+        return False
+    if esc_count % 2 == 0:
+        return False
+    return True
 
-def process_args():
-    # pylint: disable=W0603
-    """ Parse start arguments """
-    print('Configuration:')
-    global recv_host
-    global recv_port
-    global dest_host
-    global dest_port
-    global set_timestamp
-    # Get number of arguments
-    args_len = len(sys.argv)
-    # Set RECEIVER host
-    if args_len > 1:
-        recv_host = sys.argv[1]
-    # Set RECEIVER port
-    if args_len > 2:
-        recv_port = int(sys.argv[2])
-    # Set DESTINATION host
-    if args_len > 3:
-        dest_host = sys.argv[3]
-    # Set DESTINATION port
-    if args_len > 4:
-        dest_port = int(sys.argv[4])
-    # Set GPS available
-    if args_len > 5:
-        set_timestamp = str_is_true(sys.argv[5])
-    print('Recv host: ' + recv_host)
-    print('Recv port: ' + str(recv_port))
-    print('Dest host: ' + dest_host)
-    print('Dest port: ' + str(dest_port))
-    print('Set Timestamp: ' + str(set_timestamp))
-    print()
+def send_to_destination(message):
+    """ Send message to Destination via UDP """
+    server_address = (dest_host, dest_port)
+    sock_dest.sendto(message, server_address)
+
+def msg_is_valid(message):
+    """ Return True if message is to be sent; check message preamble and type;
+       ESC byte at beginning required """
+    if message[0] != ESCAPE_BYTE:
+        return False
+    # Either message tyoe 2 or 3 required
+    if message[1] != MSG_TYPE_2 and message[1] != MSG_TYPE_3:
+        return False
+    # Message preamble and type is valid -> send to destination
+    return True
 
 def get_new_timestamped_message(message):
     """ Insert the system time as timestamp and return the mew message """
@@ -348,7 +349,7 @@ def update_clock_diff():
     if (diff1 == CLOCK_DIFF_NA and diff2 == CLOCK_DIFF_NA) or len(err) > 0:
         if err != clock_diff_error:
             print('Clock diff update error: ' + err)
-        clock_diff_error = err
+        clock_diff_error = copy(err)
         return
     clock_diff_timestamp = tstmp
     clock_diff = max(abs(diff1), abs(diff2))
