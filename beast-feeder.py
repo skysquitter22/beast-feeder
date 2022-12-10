@@ -332,6 +332,10 @@ def update_clock_diff():
     diff1 = int(res_chunks[1].strip())
     diff2 = int(res_chunks[2].strip())
     err = res_chunks[3].strip()
+    print(res_str)
+    print(tstmp)
+    print(diff1)
+    print(diff2)
     if (diff1 == CLOCK_DIFF_NA and diff2 == CLOCK_DIFF_NA) or len(err) > 0:
         print('Clock diff update error: ' + err)
         return
