@@ -43,8 +43,8 @@ RECV_BYTES_SIZE = 1 # Byte per Byte required
 BUFFER_MIN_SIZE_REQUIRED = 9 # Save, because: Preamble + Timestamp + Signal/Unused
 # Clock check
 CLOCK_DIFF_LIMIT = 200 # [msec] Maximum allowed clock difference
-CLOCK_DIFF_UPDATE_INTERVAL = 30 # [s] Clock diff update interval
-CLOCK_DIFF_VALID_PERIOD = 90 # [s] Clock diff value is valid for this given period
+CLOCK_DIFF_UPDATE_INTERVAL = 180 # [s] Clock diff update interval
+CLOCK_DIFF_VALID_PERIOD = 1800 # [s] Clock diff value is valid for this given period
 CLOCK_DIFF_NA = 99999
 CLOCK_DIFF_CMD = 'check_clockdiff'
 CLOCK_DIFF_RESULT_SPLIT_STR = ','
