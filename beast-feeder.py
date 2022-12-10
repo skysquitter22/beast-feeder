@@ -4,16 +4,18 @@
 """ beast-feeder.py <recv_host> <recv_port> <dest_host> <dest_port> <set_timestamp> """
 
 # LIBS ---------
-import signal
-import socket
 import sys
+import signal
 import functools
+import time
 import datetime
+import socket
+import subprocess
 # --------------
 
 # TITLE ---------------------------
-BUILD_MAJOR = '13'
-BUILD_DATE = '221206' # this is the fall-back date for versioning
+BUILD_MAJOR = '14'
+BUILD_DATE = '221210' # this is the fall-back date for versioning
 BUILD_MINOR = '01'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
@@ -39,6 +41,12 @@ TIMESTAMP_INDEX = 2
 # Polling
 RECV_BYTES_SIZE = 1 # Byte per Byte required
 BUFFER_MIN_SIZE_REQUIRED = 9 # Save, because: Preamble + Timestamp + Signal/Unused
+# Clock check
+CLOCK_DIFF_UPDATE_INTERVAL = 30 # [s] Clock diff update interval
+CLOCK_DIFF_VALID_PERIOD = 90 # [s] Clock diff value is valid for this given period
+CLOCK_DIFF_NA = 99999
+CLOCK_DIFF_CMD = 'check_clockdiff'
+CLOCK_DIFF_RESULT_SPLIT_STR = ','
 # ----------------------------
 
 # VARIABLES ---------------------
@@ -49,6 +57,9 @@ recv_port = RECV_PORT
 dest_host = DEST_HOST
 dest_port = DEST_PORT
 set_timestamp = SET_TIMESTAMP
+# Clock check
+clock_diff_timestamp = 0
+clock_diff = CLOCK_DIFF_NA
 # -------------------------------
 
 # ensure print always flushes the buffer:
@@ -179,7 +190,8 @@ def process_recv_bytes(recv_bytes):
         if msg_is_valid(message):
             if set_timestamp:
                 message = get_new_timestamped_message(message)
-            send_to_destination(message)
+            if check_clock_diff():
+                send_to_destination(message)
         # Reset buffer and set preamble in new message buffer
         preamble = [buffer[len(buffer) - 2], buffer[len(buffer) - 1]]
         buffer.clear()
@@ -283,6 +295,43 @@ def get_timestamp_buffer():
     if timestamp_buffer[len(timestamp_buffer) - 1] == ESCAPE_BYTE:
         timestamp_buffer.append(ESCAPE_BYTE)
     return timestamp_buffer
+
+def check_clock_diff():
+    """ Return True if clock difference to NTP server is within the limits """
+    print('CHECK')
+    now = round(time.time() * 1000.0)
+    age = now - clock_diff_timestamp
+    # Update clock diff values shall be updated
+    if age > CLOCK_DIFF_UPDATE_INTERVAL * 1000:
+        update_clock_diff()
+        age = now - clock_diff_timestamp
+    # Check that values are within the limits
+    print('Age: ' + str(age))
+    # Check age
+    if age > CLOCK_DIFF_VALID_PERIOD * 1000:
+        print('Too old')
+        return False
+    # Check clock difference
+    print('Diff: ' + str(diff))
+    if clock_diff > CLOCK_DIFF_LIMIT:
+        print('Too bad')
+        return False
+    print('OK')
+    return True
+
+def update_clock_diff():
+    """ Update the clock diff values by running the CLI check script """
+    print('UPDATE')
+    result = subprocess.run([CLOCK_DIFF_CMD], stdout=subprocess.PIPE)
+    resChunks = result.stdout.split(CLOCK_DIFF_RESULT_SPLIT_STR)
+    tstmp = int(resChunks[0].strip())
+    diff1 = int(resChunk[1].strip())
+    diff2 = int(resChunk[2].strip())
+    err = resChunk[3].strip()
+    if (diff1 == CLOCK_DIFF_NA and diff2 == CLOCK_DIFF_NA) or len(err) > 0:
+        return
+    clock_diff_timestamp = tstmp
+    clock_diff = max(abs(diff1), abs(diff2))
 
 def strIsTrue(str):
     return str.lower() in ('true', '1', 'yes', 'y')
