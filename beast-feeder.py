@@ -350,6 +350,7 @@ def update_clock_diff():
             print('Clock diff update error: ' + err)
         clock_diff_error = str(err)
         return
+    clock_diff_error = ''
     clock_diff_timestamp = tstmp
     clock_diff = max(abs(diff1), abs(diff2))
 
