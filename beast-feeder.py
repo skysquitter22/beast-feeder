@@ -315,7 +315,7 @@ def check_clock_diff():
         print('Too old')
         return False
     # Check clock difference
-    print('Diff: ' + str(diff))
+    print('Diff: ' + str(clock_diff))
     if clock_diff > CLOCK_DIFF_LIMIT:
         print('Too bad')
         return False
