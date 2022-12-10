@@ -325,9 +325,9 @@ def update_clock_diff():
     result = subprocess.run([CLOCK_DIFF_CMD], stdout = subprocess.PIPE, text = True)
     resChunks = (result.stdout).split(CLOCK_DIFF_RESULT_SPLIT_STR)
     tstmp = int(resChunks[0].strip())
-    diff1 = int(resChunk[1].strip())
-    diff2 = int(resChunk[2].strip())
-    err = resChunk[3].strip()
+    diff1 = int(resChunks[1].strip())
+    diff2 = int(resChunks[2].strip())
+    err = resChunks[3].strip()
     if (diff1 == CLOCK_DIFF_NA and diff2 == CLOCK_DIFF_NA) or len(err) > 0:
         return
     clock_diff_timestamp = tstmp
