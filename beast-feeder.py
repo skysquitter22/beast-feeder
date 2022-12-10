@@ -16,7 +16,7 @@ import subprocess
 # TITLE ---------------------------
 BUILD_MAJOR = '14'
 BUILD_DATE = '221210' # this is the fall-back date for versioning
-BUILD_MINOR = '01'
+BUILD_MINOR = '02'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
 # ---------------------------------
@@ -44,7 +44,8 @@ BUFFER_MIN_SIZE_REQUIRED = 9 # Save, because: Preamble + Timestamp + Signal/Unus
 # Clock check
 CLOCK_DIFF_LIMIT = 200 # [msec] Maximum allowed clock difference
 CLOCK_DIFF_UPDATE_INTERVAL = 180 # [s] Clock diff update interval
-CLOCK_DIFF_VALID_PERIOD = 1800 # [s] Clock diff value is valid for this given period
+CLOCK_DIFF_MIN_UPDATE_INTERVAL = 5 # [s] Clock diff minimum update interval
+CLOCK_DIFF_VALID_PERIOD = 30 # [mins] Clock diff value is valid for this given period
 CLOCK_DIFF_NA = 99999
 CLOCK_DIFF_CMD = 'check_clockdiff'
 CLOCK_DIFF_RESULT_SPLIT_STR = ','
@@ -59,6 +60,7 @@ dest_host = DEST_HOST
 dest_port = DEST_PORT
 set_timestamp = SET_TIMESTAMP
 # Clock check
+clock_diff_last_update = 0
 clock_diff_timestamp = 0
 clock_diff = CLOCK_DIFF_NA
 clock_diff_error = ''
@@ -317,16 +319,19 @@ def get_timestamp_buffer():
 
 def check_clock_diff():
     """ Return True if clock difference to NTP server is within the limits """
+    global clock_diff_last_update
     global clock_diff_timestamp
     now = round(time.time() * 1000.0)
-    age = now - clock_diff_timestamp
+    age_last_update = now - clock_diff_last_update
+    age_clock_diff = now - clock_diff_timestamp
     # Update clock diff values shall be updated
-    if age > CLOCK_DIFF_UPDATE_INTERVAL * 1000:
+    if age_last_update > CLOCK_DIFF_MIN_UPDATE_INTERVAL * 1000 and age_clock_diff > CLOCK_DIFF_UPDATE_INTERVAL * 1000:
         update_clock_diff()
-        age = now - clock_diff_timestamp
+        clock_diff_last_update = now
+        age_clock_diff = now - clock_diff_timestamp
     # Check that values are within the limits
     # Check age
-    if age > CLOCK_DIFF_VALID_PERIOD * 1000:
+    if age_clock_diff > CLOCK_DIFF_VALID_PERIOD * 60000:
         return False
     # Check clock difference
     if clock_diff > CLOCK_DIFF_LIMIT:
