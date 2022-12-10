@@ -323,6 +323,8 @@ def check_clock_diff():
 def update_clock_diff():
     """ Update the clock diff values by running the CLI check script """
     print('UPDATE')
+    global clock_diff_timestamp
+    global clock_diff
     result = subprocess.run([CLOCK_DIFF_CMD], stdout = subprocess.PIPE, text = True)
     resChunks = (result.stdout).split(CLOCK_DIFF_RESULT_SPLIT_STR)
     tstmp = int(resChunks[0].strip())
@@ -330,10 +332,7 @@ def update_clock_diff():
     diff2 = int(resChunks[2].strip())
     err = resChunks[3].strip()
     if (diff1 == CLOCK_DIFF_NA and diff2 == CLOCK_DIFF_NA) or len(err) > 0:
-        print(tstmp)
-        print(diff1)
-        print(diff2)
-        print(err)
+        print('Clock diff update error: ' + err)
         return
     clock_diff_timestamp = tstmp
     clock_diff = max(abs(diff1), abs(diff2))
