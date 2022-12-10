@@ -230,7 +230,7 @@ def process_args():
         dest_port = int(sys.argv[4])
     # Set GPS available
     if args_len > 5:
-        set_timestamp = strIsTrue(sys.argv[5])
+        set_timestamp = str_is_true(sys.argv[5])
     print('Recv host: ' + recv_host)
     print('Recv port: ' + str(recv_port))
     print('Dest host: ' + dest_host)
@@ -326,18 +326,19 @@ def update_clock_diff():
     global clock_diff_timestamp
     global clock_diff
     result = subprocess.run([CLOCK_DIFF_CMD], stdout = subprocess.PIPE, text = True)
-    resChunks = (result.stdout).split(CLOCK_DIFF_RESULT_SPLIT_STR)
-    tstmp = int(resChunks[0].strip())
-    diff1 = int(resChunks[1].strip())
-    diff2 = int(resChunks[2].strip())
-    err = resChunks[3].strip()
+    res_str = result.stdout
+    res_chunks = res_str.split(CLOCK_DIFF_RESULT_SPLIT_STR)
+    tstmp = int(res_chunks[0].strip())
+    diff1 = int(res_chunks[1].strip())
+    diff2 = int(res_chunks[2].strip())
+    err = res_chunks[3].strip()
     if (diff1 == CLOCK_DIFF_NA and diff2 == CLOCK_DIFF_NA) or len(err) > 0:
         print('Clock diff update error: ' + err)
         return
     clock_diff_timestamp = tstmp
     clock_diff = max(abs(diff1), abs(diff2))
 
-def strIsTrue(str):
+def str_is_true(str):
     return str.lower() in ('true', '1', 'yes', 'y')
 # ------------------------------------------------------------------
 
