@@ -15,7 +15,7 @@ import subprocess
 
 # TITLE ---------------------------
 BUILD_MAJOR = '15'
-BUILD_DATE = '221210' # this is the fall-back date for versioning
+BUILD_DATE = '221211' # this is the fall-back date for versioning
 BUILD_MINOR = '01'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
@@ -36,15 +36,27 @@ MSG_TYPE_1 = 0x31
 MSG_TYPE_2 = 0x32
 MSG_TYPE_3 = 0x33
 MSG_TYPE_4 = 0x34
+PREAMBLE_LEN = 2
 TIMESTAMP_LEN = 6
+SIGNAL_LEN = 1
+MODE_AC_LEN = 2
+MODE_S_SHORT = 7
+MODE_S_LONG = 14
+TIMING_LEN = 1
+META_LEN = PREAMBLE_LEN + TIMESTAMP_LEN + SIGNAL_LEN
+MSG_TYPE_1_LEN = META_LEN + MODE_AC_LEN
+MSG_TYPE_2_LEN = META_LEN + MODE_S_SHORT
+MSG_TYPE_3_LEN = META_LEN + MODE_S_LONG
+MSG_TYPE_4_LEN = META_LEN + TIMING_LEN
+MSG_NO_TYPE_LEN = 1 # If no preamble detected, then poll _1_ byte
 TIMESTAMP_INDEX = 2
 # Polling
 RECV_BYTES_SIZE = 1 # Byte per Byte required
 BUFFER_MIN_SIZE_REQUIRED = 9 # Save, because: Preamble + Timestamp + Signal/Unused
 # Clock check
-CLOCK_DIFF_LIMIT = 200 # [msec] Maximum allowed clock difference
-CLOCK_DIFF_UPDATE_INTERVAL = 180 # [s] Clock diff update interval
-CLOCK_DIFF_MIN_UPDATE_INTERVAL = 3 # [s] Clock diff minimum update interval
+CLOCK_DIFF_LIMIT = 50 # [msec] Maximum allowed clock difference
+CLOCK_DIFF_UPDATE_INTERVAL = 300 # [s] Clock diff update interval
+CLOCK_DIFF_MIN_UPDATE_INTERVAL = 5 # [s] Clock diff minimum update interval
 CLOCK_DIFF_VALID_PERIOD = 30 # [mins] Clock diff value is valid for this given period
 CLOCK_DIFF_NA = 99999
 CLOCK_DIFF_CMD = 'check_clockdiff'
@@ -178,18 +190,20 @@ def close_socket_to_destination():
 def listen_to_receiver():
     """ Listen for incoming bytes from the Receiver """
     print('Start listening...')
+    len = 1 # Init to poll 1 byte each at beginning
     while 1:
-        recv_bytes = bytearray(sock_recv.recv(RECV_BYTES_SIZE))
-        process_recv_bytes(recv_bytes)
+        recv_bytes = bytearray(sock_recv.recv(len))
+        len = process_recv_bytes(recv_bytes)
 
 def process_recv_bytes(recv_bytes):
-    """ Process received bytes """
+    """ Process received bytes, return byte array len to be received next dependent on detected message preamble type """
     global clock_diff_is_valid
     global clock_diff_was_valid
     # Add received data chunk to buffer
     buffer.extend(recv_bytes)
     # Look for Beast preamble
-    if preamble_detected():
+    msg_len = preamble_detected()
+    if msg_len > MSG_NO_TYPE_LEN:
         # Prepare received message
         message =  bytearray(buffer[0:len(buffer) - 2])
         # Send message
@@ -215,24 +229,26 @@ def process_recv_bytes(recv_bytes):
         preamble = [buffer[len(buffer) - 2], buffer[len(buffer) - 1]]
         buffer.clear()
         buffer.extend(preamble)
+        return msg_len
 
 def preamble_detected():
-    """ Return True if message preamble detected """
+    """ Return message len dependent on type if message preamble is detected, otherwise return 0 """
     # Minimum buffer length required
     if len(buffer) < BUFFER_MIN_SIZE_REQUIRED:
-        return False
+        return 0
     index = len(buffer) - 1
-    # Check message type
-    try:
-        if buffer[index] != MSG_TYPE_1 and buffer[index] != MSG_TYPE_2 and \
-                        buffer[index] != MSG_TYPE_3 and \
-                        buffer[index] != MSG_TYPE_4:
-            return False
-    except IndexError:
-        # This error is almost always caused by losing the connection to the RECV_HOST.
-        print("Beast-feeder is exiting - did we lose the connection to " \
-                        + recv_host + ":" + str(recv_port) + "?")
-        sys.exit()
+    # Check message type and length
+    msg_len = MSG_NO_TYPE_LEN
+    if buffer[index] == MSG_TYPE_1:
+        msg_len = MSG_TYPE_1_LEN
+    elif buffer[index] == MSG_TYPE_2:
+        msg_len = MSG_TYPE_2_LEN
+    elif buffer[index] == MSG_TYPE_3:
+        msg_len = MSG_TYPE_3_LEN
+    elif buffer[index] == MSG_TYPE_4:
+        msg_len = MSG_TYPE_4_LEN
+    else:
+        return 0
     # Count amount of Escape bytes (has to be odd)
     index -= 1
     esc_count = 0
@@ -240,10 +256,10 @@ def preamble_detected():
         esc_count += 1
         index -= 1
     if index == 0 and buffer[index] == ESCAPE_BYTE:
-        return False
+        return 0
     if esc_count % 2 == 0:
-        return False
-    return True
+        return 0
+    return msg_len
 
 def send_to_destination(message):
     """ Send message to Destination via UDP """
@@ -365,7 +381,7 @@ def update_clock_diff():
     err = res_chunks[3].replace('"', '').strip()
     if (diff1 == CLOCK_DIFF_NA and diff2 == CLOCK_DIFF_NA) or len(err) > 0:
         if err != clock_diff_error:
-            print('Clock diff update error: ' + err)
+            print(err)
         clock_diff_error = str(err)
         return
     clock_diff_error = ''
