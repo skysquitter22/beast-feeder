@@ -190,10 +190,12 @@ def close_socket_to_destination():
 def listen_to_receiver():
     """ Listen for incoming bytes from the Receiver """
     print('Start listening...')
-    len = 1 # Init to poll 1 byte each at beginning
-    while 1:
-        recv_bytes = bytearray(sock_recv.recv(len))
-        len = process_recv_bytes(recv_bytes)
+    poll_len = MSG_NO_TYPE_LEN # Init size to poll at beginning
+    while True:
+        recv_bytes = bytearray(sock_recv.recv(poll_len))
+        poll_len = process_recv_bytes(recv_bytes)
+        if poll_len > MSG_NO_TYPE_LEN:
+            poll_len = poll_len - PREAMBLE_LEN
 
 def process_recv_bytes(recv_bytes):
     """ Process received bytes, return byte array len to be received next dependent on detected message preamble type """
@@ -205,7 +207,7 @@ def process_recv_bytes(recv_bytes):
     msg_len = preamble_detected()
     if msg_len > MSG_NO_TYPE_LEN:
         # Prepare received message
-        message =  bytearray(buffer[0:len(buffer) - 2])
+        message =  bytearray(buffer[0:len(buffer) - PREAMBLE_LEN])
         # Send message
         if msg_is_valid(message):
             # NTP system timestamp is to be set, check clock diff
@@ -226,7 +228,7 @@ def process_recv_bytes(recv_bytes):
             else:
                 send_to_destination(message)
         # Reset buffer and set preamble in new message buffer
-        preamble = [buffer[len(buffer) - 2], buffer[len(buffer) - 1]]
+        preamble = [buffer[len(buffer) - PREAMBLE_LEN], buffer[len(buffer) - PREAMBLE_LEN + 1]]
         buffer.clear()
         buffer.extend(preamble)
         return msg_len
