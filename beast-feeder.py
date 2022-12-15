@@ -381,6 +381,9 @@ def update_clock_diff():
 
 def set_clock_diff_check_omitting():
     """ Clock diff is ignored at startup for a given period """
+    print(get_current_millis())
+    print(millis_at_startup)
+    print(get_current_millis() - millis_at_startup < CLOCK_DIFF_CHECK_OMITTING_PERIOD * 1000)
     return get_current_millis() - millis_at_startup < CLOCK_DIFF_CHECK_OMITTING_PERIOD * 1000
     
 def get_current_millis():
