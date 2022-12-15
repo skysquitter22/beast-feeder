@@ -15,8 +15,8 @@ import subprocess
 
 # TITLE ---------------------------
 BUILD_MAJOR = '14'
-BUILD_DATE = '221210' # this is the fall-back date for versioning
-BUILD_MINOR = '03'
+BUILD_DATE = '221215' # this is the fall-back date for versioning
+BUILD_MINOR = '04'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
 # ---------------------------------
@@ -42,9 +42,10 @@ TIMESTAMP_INDEX = 2
 RECV_BYTES_SIZE = 1 # Byte per Byte required
 BUFFER_MIN_SIZE_REQUIRED = 9 # Save, because: Preamble + Timestamp + Signal/Unused
 # Clock check
+CLOCK_DIFF_CHECK_OMITTING_PERIOD = 60 # [s] Clock diff is ignored for this given period at startup
 CLOCK_DIFF_LIMIT = 200 # [msec] Maximum allowed clock difference
 CLOCK_DIFF_UPDATE_INTERVAL = 180 # [s] Clock diff update interval
-CLOCK_DIFF_MIN_UPDATE_INTERVAL = 3 # [s] Clock diff minimum update interval
+CLOCK_DIFF_MIN_UPDATE_INTERVAL = 30 # [s] Clock diff minimum update interval
 CLOCK_DIFF_VALID_PERIOD = 30 # [mins] Clock diff value is valid for this given period
 CLOCK_DIFF_NA = 99999
 CLOCK_DIFF_CMD = 'check_clockdiff'
@@ -60,6 +61,8 @@ dest_host = DEST_HOST
 dest_port = DEST_PORT
 set_timestamp = SET_TIMESTAMP
 # Clock check
+millis_at_start = get_current_millis() # Required for inhibitation check
+omit_clock_diff_check = True # Has to be True on startup
 clock_diff_last_update = 0
 clock_diff_timestamp = 0
 clock_diff = CLOCK_DIFF_NA
@@ -196,8 +199,12 @@ def process_recv_bytes(recv_bytes):
         if msg_is_valid(message):
             # NTP system timestamp is to be set, check clock diff
             if set_timestamp:
+                # Check clock diff check omitting status
+                if omit_clock_diff_check:
+                    omit_clock_diff_check = set_clock_diff_check_omitting()
                 # Check latest clock diff
-                clock_diff_is_valid = check_clock_diff()
+                if not omit_clock_diff_check:
+                    clock_diff_is_valid = check_clock_diff()
                 # Check for clock diff status change
                 if clock_diff_is_valid and not clock_diff_was_valid:
                     print('Clock diff is valid.')
@@ -326,7 +333,7 @@ def check_clock_diff():
     global clock_diff_timestamp
     global clock_diff_too_old
     global clock_diff_too_bad
-    now = round(time.time() * 1000.0)
+    now = get_current_millis()
     age_last_update = now - clock_diff_last_update
     age_clock_diff = now - clock_diff_timestamp
     # Update clock diff values shall be updated
@@ -372,7 +379,16 @@ def update_clock_diff():
     clock_diff_timestamp = tstmp
     clock_diff = max(abs(diff1), abs(diff2))
 
+def set_clock_diff_check_omitting():
+    """ Clock diff is ignored at startup for a given period """
+    return get_current_millis() - millis_at_start < CLOCK_DIFF_CHECK_OMITTING_PERIOD * 1000
+    
+def get_current_millis():
+    """ Return current epoch time millis """
+    return round(time.time() * 1000.0)
+    
 def str_is_true(str):
+    """ Return 'True' string detected """
     return str.lower() in ('true', '1', 'yes', 'y')
 # ------------------------------------------------------------------
 
