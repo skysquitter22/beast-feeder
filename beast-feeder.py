@@ -16,7 +16,7 @@ import subprocess
 # TITLE ---------------------------
 BUILD_MAJOR = '14'
 BUILD_DATE = '221215' # this is the fall-back date for versioning
-BUILD_MINOR = '04'
+BUILD_MINOR = '05'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
 # ---------------------------------
