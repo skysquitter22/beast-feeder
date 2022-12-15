@@ -187,6 +187,7 @@ def listen_to_receiver():
 
 def process_recv_bytes(recv_bytes):
     """ Process received bytes """
+    global omit_clock_diff_check
     global clock_diff_is_valid
     global clock_diff_was_valid
     # Add received data chunk to buffer
@@ -330,7 +331,6 @@ def get_timestamp_buffer():
 def check_clock_diff():
     """ Return True if clock difference to NTP server is within the limits """
     global clock_diff_last_update
-    global clock_diff_timestamp
     global clock_diff_too_old
     global clock_diff_too_bad
     now = get_current_millis()
