@@ -53,6 +53,7 @@ CLOCK_DIFF_RESULT_SPLIT_STR = ','
 # ----------------------------
 
 # VARIABLES ---------------------
+millis_at_startup = 0 # Save startup time to know the uptime
 buffer = bytearray()
 # Set defaults
 recv_host = RECV_HOST
@@ -61,7 +62,6 @@ dest_host = DEST_HOST
 dest_port = DEST_PORT
 set_timestamp = SET_TIMESTAMP
 # Clock check
-millis_at_start = get_current_millis() # Required for inhibitation check
 omit_clock_diff_check = True # Has to be True on startup
 clock_diff_last_update = 0
 clock_diff_timestamp = 0
@@ -381,7 +381,7 @@ def update_clock_diff():
 
 def set_clock_diff_check_omitting():
     """ Clock diff is ignored at startup for a given period """
-    return get_current_millis() - millis_at_start < CLOCK_DIFF_CHECK_OMITTING_PERIOD * 1000
+    return get_current_millis() - millis_at_startup < CLOCK_DIFF_CHECK_OMITTING_PERIOD * 1000
     
 def get_current_millis():
     """ Return current epoch time millis """
@@ -399,6 +399,8 @@ print(TITLE)
 print('build ' + BUILD)
 print()
 
+# Startup now
+millis_at_startup = get_current_millis()
 # Process start arguments
 process_args()
 
