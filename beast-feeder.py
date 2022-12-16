@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # pylint: disable=C0103,C0114,C0112,C0116,W1514,W0702,W0622
 
-""" beast-feeder.py <recv_host> <recv_port> <dest_host> <dest_port> <set_timestamp> """
+""" beast-feeder.py <recv_host> <recv_port> <dest_host> <dest_port> <set_timestamp> <clock_diff_limit>"""
 
 # LIBS ---------
 import sys
@@ -14,9 +14,9 @@ import subprocess
 # --------------
 
 # TITLE ---------------------------
-BUILD_MAJOR = '14'
-BUILD_DATE = '221215' # this is the fall-back date for versioning
-BUILD_MINOR = '06'
+BUILD_MAJOR = '15'
+BUILD_DATE = '221216' # this is the fall-back date for versioning
+BUILD_MINOR = '01'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
 # ---------------------------------
@@ -26,7 +26,8 @@ RECV_HOST = 'readsb'
 RECV_PORT = 30005
 DEST_HOST = '10.9.2.1'
 DEST_PORT = 11092
-SET_TIMESTAMP = False
+SET_TIMESTAMP = False # Enable clock diff check
+CLOCK_DIFF_LIMIT = 200 # [msec] Maximum allowed clock difference
 # ----------------------------
 
 # CONSTANTS ------------------
@@ -43,7 +44,6 @@ RECV_BYTES_SIZE = 1 # Byte per Byte required
 BUFFER_MIN_SIZE_REQUIRED = 9 # Save, because: Preamble + Timestamp + Signal/Unused
 # Clock check
 CLOCK_DIFF_CHECK_OMITTING_PERIOD = 60 # [s] Clock diff is ignored for this given period at startup
-CLOCK_DIFF_LIMIT = 200 # [msec] Maximum allowed clock difference
 CLOCK_DIFF_UPDATE_INTERVAL = 180 # [s] Clock diff update interval
 CLOCK_DIFF_MIN_UPDATE_INTERVAL = 30 # [s] Clock diff minimum update interval
 CLOCK_DIFF_VALID_PERIOD = 30 # [mins] Clock diff value is valid for this given period
@@ -61,6 +61,7 @@ recv_port = RECV_PORT
 dest_host = DEST_HOST
 dest_port = DEST_PORT
 set_timestamp = SET_TIMESTAMP
+clock_diff_limit = CLOCK_DIFF_LIMIT
 # Clock check
 omit_clock_diff_check = True # Has to be True on startup
 clock_diff_last_update = 0
@@ -97,6 +98,7 @@ def process_args():
     global dest_host
     global dest_port
     global set_timestamp
+    global clock_diff_limit
     # Get number of arguments
     args_len = len(sys.argv)
     # Set RECEIVER host
@@ -114,11 +116,14 @@ def process_args():
     # Set GPS available
     if args_len > 5:
         set_timestamp = str_is_true(sys.argv[5])
+    if args_len > 6:
+        clock_diff_limit = int(sys.argv[6])
     print('Recv host: ' + recv_host)
     print('Recv port: ' + str(recv_port))
     print('Dest host: ' + dest_host)
     print('Dest port: ' + str(dest_port))
     print('Set Timestamp: ' + str(set_timestamp))
+    print('Clock diff limit: ' + str(clock_diff_limit))
     print()
 
 def shutdown_gracefully():
@@ -350,7 +355,7 @@ def check_clock_diff():
         return False
     clock_diff_too_old = False
     # Check clock difference
-    if clock_diff > CLOCK_DIFF_LIMIT:
+    if clock_diff > clock_diff_limit:
         if not clock_diff_too_bad:
             print('Clock diff is too bad!')
             clock_diff_too_bad = True
@@ -381,9 +386,6 @@ def update_clock_diff():
 
 def set_clock_diff_check_omitting():
     """ Clock diff is ignored at startup for a given period """
-    print(get_current_millis())
-    print(millis_at_startup)
-    print(get_current_millis() - millis_at_startup < CLOCK_DIFF_CHECK_OMITTING_PERIOD * 1000)
     return get_current_millis() - millis_at_startup < CLOCK_DIFF_CHECK_OMITTING_PERIOD * 1000
     
 def get_current_millis():
