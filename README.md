@@ -4,7 +4,7 @@ Script file: beast-feeder.py
 
 Connect to a TCP BEAST server and forward each message via UDP.
 
-CLI usage: python3 beast-feeder.py [receiver host] [receiver port] [destination host] [destination port]
+CLI usage: python3 beast-feeder.py [receiver host] [receiver port] [destination host] [destination port] [set timestamp] [clock diff limit]
 
 Defaults:
   
@@ -15,5 +15,9 @@ receiver port: `30005` # Receiver BEAST port streaming ALL Mode S Downlink Forma
 destination host: `10.9.2.1` # Privided by our technical support, if other
 
 destination port: `11092` # Privided by our technical support, if other
+
+set timestamp: `false` # Insert system clock based timestamp in messages
+
+clock diff limit: `200` # [ms] If `set timestamp` enabled, this defines the validation limit of the system clock diff in reference to NTP
 
 VPN keys are required! For more information please visit www.skysquitter.com
