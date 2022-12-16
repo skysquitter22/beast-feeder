@@ -123,7 +123,7 @@ def process_args():
     print('Dest host: ' + dest_host)
     print('Dest port: ' + str(dest_port))
     print('Set Timestamp: ' + str(set_timestamp))
-    print('Clock diff limit: ' + str(clock_diff_limit))
+    print('Clock diff limit: ' + str(clock_diff_limit) + 'ms')
     print()
 
 def shutdown_gracefully():
