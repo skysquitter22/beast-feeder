@@ -16,7 +16,7 @@ import subprocess
 # TITLE ---------------------------
 BUILD_MAJOR = '14'
 BUILD_DATE = '221215' # this is the fall-back date for versioning
-BUILD_MINOR = '05'
+BUILD_MINOR = '06'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
 # ---------------------------------
@@ -66,9 +66,9 @@ omit_clock_diff_check = True # Has to be True on startup
 clock_diff_last_update = 0
 clock_diff_timestamp = 0
 clock_diff = CLOCK_DIFF_NA
-# Init so as to cause output on error
+# Init as valid
 clock_diff_was_valid = True
-clock_diff_is_valid = False
+clock_diff_is_valid = True
 clock_diff_too_old = False
 clock_diff_too_bad = False
 clock_diff_error = ''
