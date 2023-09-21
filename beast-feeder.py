@@ -459,7 +459,7 @@ def get_str_of_df_filter():
     s = str(df_filter[0])
     i = 1
     while i < len(df_filter):
-        s = s + ', ' + + str(df_filter[i])
+        s = s + ', ' + str(df_filter[i])
         i += 1
     return s
 
