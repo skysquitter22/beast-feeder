@@ -16,7 +16,7 @@ import subprocess
 # TITLE ---------------------------
 BUILD_MAJOR = '16'
 BUILD_DATE = '230922' # this is the fall-back date for versioning
-BUILD_MINOR = '03'
+BUILD_MINOR = '04'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
 # ---------------------------------
@@ -28,7 +28,7 @@ DEST_HOST = '10.9.2.1'
 DEST_PORT = 11092
 SET_TIMESTAMP = False # Enable clock diff check
 CLOCK_DIFF_LIMIT = 200 # [msec] Maximum allowed clock difference
-DF_FILTER = [ 17, 20, 21 ]
+DF_FILTER = [ 17, 20, 21 ] # Default allowed DF to be sent
 # ----------------------------
 
 # CONSTANTS ------------------
@@ -107,7 +107,6 @@ def process_args():
     global dest_port
     global set_timestamp
     global clock_diff_limit
-    global df_filter
     # Get number of arguments
     args_len = len(sys.argv)
     # Set RECEIVER host
@@ -127,8 +126,8 @@ def process_args():
         set_timestamp = str_is_true(sys.argv[5])
     if args_len > 6:
         clock_diff_limit = int(sys.argv[6])
-#    if args_len > 7:
-#       df_filter = get_int_array_from_str(sys.argv[7])
+    if args_len > 7:
+        df_filter = get_int_array_from_str(sys.argv[7])
     print('Recv host: ' + recv_host)
     print('Recv port: ' + str(recv_port))
     print('Dest host: ' + dest_host)
@@ -415,7 +414,6 @@ def str_is_true(s):
     
 def get_int_array_from_str(s):
     """ Return an integer array of comma separated string """
-    global df_filter
     # Empty array
     df_filter = []
     # Ignore DF filtering
@@ -429,13 +427,11 @@ def get_int_array_from_str(s):
 
 def df_passed(message):
     """ Return True if DF passes given filter """
-    global df_filter
     # No filtering
     if len(df_filter) == 0:
         return True
     # Get DF from message
     df = get_df_from_message(message)
-    print(str(df))
     return df in df_filter
 
 def get_df_from_message(message):
@@ -453,7 +449,6 @@ def get_df_from_message(message):
     
 def get_str_of_df_filter():
     """ Return string showing DF filter """
-    global df_filter
     # No filter
     if len(df_filter) == 0:
         return 'all'
