@@ -14,9 +14,9 @@ import subprocess
 # --------------
 
 # TITLE ---------------------------
-BUILD_MAJOR = '15'
-BUILD_DATE = '221216' # this is the fall-back date for versioning
-BUILD_MINOR = '02'
+BUILD_MAJOR = '16'
+BUILD_DATE = '230921' # this is the fall-back date for versioning
+BUILD_MINOR = '01'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
 # ---------------------------------
@@ -28,6 +28,7 @@ DEST_HOST = '10.9.2.1'
 DEST_PORT = 11092
 SET_TIMESTAMP = False # Enable clock diff check
 CLOCK_DIFF_LIMIT = 200 # [msec] Maximum allowed clock difference
+DF_FILTER = [ 17, 20, 21 ]
 # ----------------------------
 
 # CONSTANTS ------------------
@@ -37,8 +38,13 @@ MSG_TYPE_1 = 0x31
 MSG_TYPE_2 = 0x32
 MSG_TYPE_3 = 0x33
 MSG_TYPE_4 = 0x34
+PREAMBLE_INDEX = 0
+PREAMBLE_LEN = 2
+TIMESTAMP_INDEX = PREAMBLE_INDEX + PREAMBLE_LEN
 TIMESTAMP_LEN = 6
-TIMESTAMP_INDEX = 2
+SIGNAL_INDEX = TIMESTAMP_INDEX + TIMESTAMP_LEN
+SIGNAL_LEN = 1
+MODE_S_INDEX = SIGNAL_INDEX + SIGNAL_LEN
 # Polling
 RECV_BYTES_SIZE = 1 # Byte per Byte required
 BUFFER_MIN_SIZE_REQUIRED = 9 # Save, because: Preamble + Timestamp + Signal/Unused
@@ -62,6 +68,7 @@ dest_host = DEST_HOST
 dest_port = DEST_PORT
 set_timestamp = SET_TIMESTAMP
 clock_diff_limit = CLOCK_DIFF_LIMIT
+df_filter = DF_FILTER
 # Clock check
 omit_clock_diff_check = True # Has to be True on startup
 clock_diff_last_update = 0
@@ -99,6 +106,7 @@ def process_args():
     global dest_port
     global set_timestamp
     global clock_diff_limit
+    global df_filter
     # Get number of arguments
     args_len = len(sys.argv)
     # Set RECEIVER host
@@ -118,12 +126,15 @@ def process_args():
         set_timestamp = str_is_true(sys.argv[5])
     if args_len > 6:
         clock_diff_limit = int(sys.argv[6])
+    if args_len > 7:
+        df_filter = str_to_int_array(sys.argv[7])
     print('Recv host: ' + recv_host)
     print('Recv port: ' + str(recv_port))
     print('Dest host: ' + dest_host)
     print('Dest port: ' + str(dest_port))
     print('Set Timestamp: ' + str(set_timestamp))
     print('Clock diff limit: ' + str(clock_diff_limit) + 'ms')
+    print('DF filter: ' + get_str_df_filter())
     print()
 
 def shutdown_gracefully():
@@ -271,6 +282,9 @@ def msg_is_valid(message):
     # Either message tyoe 2 or 3 required
     if message[1] != MSG_TYPE_2 and message[1] != MSG_TYPE_3:
         return False
+    # Check that DF passes filter
+    if !df_is_allowed(message):
+        return False
     # Message preamble and type is valid -> send to destination
     return True
 
@@ -285,7 +299,7 @@ def get_new_timestamped_message(message):
             index += 1
         index +=1
         counter += 1
-    signalIndex = index
+    signal_index = index
     # Create new message
     new_message = bytearray()
     # Preamble
@@ -293,7 +307,7 @@ def get_new_timestamped_message(message):
     # New timestamp
     new_message.extend(timestamp_buffer)
     # Remaining orginal message
-    new_message.extend(message[signalIndex:])
+    new_message.extend(message[signal_index:])
     return new_message
 
 def get_timestamp_buffer():
@@ -392,9 +406,49 @@ def get_current_millis():
     """ Return current epoch time millis """
     return round(time.time() * 1000.0)
     
-def str_is_true(str):
+def str_is_true(s):
     """ Return 'True' string detected """
-    return str.lower() in ('true', '1', 'yes', 'y')
+    return s.lower() in ('true', '1', 'yes', 'y')
+    
+def str_to_int_array(s):
+    """ Return an integer array of comma separated string """
+    // TODO
+
+def df_passed(message):
+    """ Return True if DF passes given filter """
+    # No filtering
+    if len(df_filter) == 0:
+        return True
+    # Get DF from message
+    df = get_df_from_message(message)
+    return df in df_filter
+
+def get_df_from_message(message):
+    """ Return DF of this message """
+     # Find timestamp begin and end index
+    index = TIMESTAMP_INDEX
+    counter = TIMESTAMP_INDEX
+    while counter < MODE_S_INDEX:
+        if message[index] == ESCAPE_BYTE:
+            index += 1
+        index += 1
+        counter += 1
+    # Calc DF and return value
+    return (message[index] >> 3) & 0x1f
+    
+def get_str_df_filter():
+    """ Return string showing DF filter """
+    # No filter
+    if len(df_filter) == 0:
+        return 'all'
+    # Build DF filter string
+    s = str(df_filter[0])
+    i = 1
+    while i < len(df_filter):
+        s = s + ', ' + + str(df_filter[i])
+        i += 1
+    return s
+
 # ------------------------------------------------------------------
 
 # EXECUTE ----------------------------------------------------------
