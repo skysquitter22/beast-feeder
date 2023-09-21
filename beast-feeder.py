@@ -451,6 +451,7 @@ def get_df_from_message(message):
     
 def get_str_df_filter():
     """ Return string showing DF filter """
+    global df_filter
     # No filter
     if len(df_filter) == 0:
         return 'all'
