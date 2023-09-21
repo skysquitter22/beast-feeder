@@ -11,11 +11,12 @@ import time
 import datetime
 import socket
 import subprocess
+import csv
 # --------------
 
 # TITLE ---------------------------
 BUILD_MAJOR = '16'
-BUILD_DATE = '230921' # this is the fall-back date for versioning
+BUILD_DATE = '230922' # this is the fall-back date for versioning
 BUILD_MINOR = '01'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
@@ -412,10 +413,21 @@ def str_is_true(s):
     
 def str_to_int_array(s):
     """ Return an integer array of comma separated string """
-    // TODO
+    global df_filter
+    # Empty array
+    df_filter = []
+    # Ignore DF filtering
+    if s.lower == STR_ALL:
+        return
+    # Extract DF filter csv
+    reader = csv.reader(s, delimiter=DF_FILTER_SEP)
+    # Add values to empty array
+    for d in reader:
+        df_filter.append(int(d))
 
 def df_passed(message):
     """ Return True if DF passes given filter """
+    global df_filter
     # No filtering
     if len(df_filter) == 0:
         return True
