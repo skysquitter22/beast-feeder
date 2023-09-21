@@ -423,7 +423,7 @@ def str_to_int_array(s):
     dfs = s.split(SPLIT_STR)
     # Add values to empty array
     for df in dfs:
-        df_filter.append(int(df)
+        df_filter.append(int(df))
 
 def df_passed(message):
     """ Return True if DF passes given filter """
