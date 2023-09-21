@@ -16,7 +16,7 @@ import subprocess
 # TITLE ---------------------------
 BUILD_MAJOR = '16'
 BUILD_DATE = '230922' # this is the fall-back date for versioning
-BUILD_MINOR = '04'
+BUILD_MINOR = '01'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
 # ---------------------------------
@@ -107,6 +107,7 @@ def process_args():
     global dest_port
     global set_timestamp
     global clock_diff_limit
+    global df_filter
     # Get number of arguments
     args_len = len(sys.argv)
     # Set RECEIVER host
