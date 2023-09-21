@@ -284,7 +284,7 @@ def msg_is_valid(message):
     if message[1] != MSG_TYPE_2 and message[1] != MSG_TYPE_3:
         return False
     # Check that DF passes filter
-    if !df_passed(message):
+    if not df_passed(message):
         return False
     # Message preamble and type is valid, DF filter passed -> send to destination
     return True
