@@ -283,9 +283,9 @@ def msg_is_valid(message):
     if message[1] != MSG_TYPE_2 and message[1] != MSG_TYPE_3:
         return False
     # Check that DF passes filter
-    if !df_is_allowed(message):
+    if !df_passed(message):
         return False
-    # Message preamble and type is valid -> send to destination
+    # Message preamble and type is valid, DF filter passed -> send to destination
     return True
 
 def get_new_timestamped_message(message):
@@ -421,6 +421,7 @@ def df_passed(message):
         return True
     # Get DF from message
     df = get_df_from_message(message)
+    print(str(df))
     return df in df_filter
 
 def get_df_from_message(message):
