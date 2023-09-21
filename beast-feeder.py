@@ -127,8 +127,8 @@ def process_args():
         set_timestamp = str_is_true(sys.argv[5])
     if args_len > 6:
         clock_diff_limit = int(sys.argv[6])
-    if args_len > 7:
-        df_filter = get_int_array_from_str(sys.argv[7])
+#    if args_len > 7:
+#        df_filter = get_int_array_from_str(sys.argv[7])
     print('Recv host: ' + recv_host)
     print('Recv port: ' + str(recv_port))
     print('Dest host: ' + dest_host)
