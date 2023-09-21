@@ -11,13 +11,12 @@ import time
 import datetime
 import socket
 import subprocess
-import csv
 # --------------
 
 # TITLE ---------------------------
 BUILD_MAJOR = '16'
 BUILD_DATE = '230922' # this is the fall-back date for versioning
-BUILD_MINOR = '01'
+BUILD_MINOR = '02'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
 # ---------------------------------
@@ -56,7 +55,8 @@ CLOCK_DIFF_MIN_UPDATE_INTERVAL = 30 # [s] Clock diff minimum update interval
 CLOCK_DIFF_VALID_PERIOD = 30 # [mins] Clock diff value is valid for this given period
 CLOCK_DIFF_NA = 99999
 CLOCK_DIFF_CMD = 'check_clockdiff'
-CLOCK_DIFF_RESULT_SPLIT_STR = ','
+SPLIT_STR = ','
+ALL_STR = 'all'
 # ----------------------------
 
 # VARIABLES ---------------------
@@ -385,7 +385,7 @@ def update_clock_diff():
     global clock_diff_error
     result = subprocess.run([CLOCK_DIFF_CMD], stdout = subprocess.PIPE, text = True)
     res_str = result.stdout
-    res_chunks = res_str.split(CLOCK_DIFF_RESULT_SPLIT_STR)
+    res_chunks = res_str.split(SPLIT_STR)
     tstmp = int(res_chunks[0].strip())
     diff1 = int(res_chunks[1].strip())
     diff2 = int(res_chunks[2].strip())
@@ -417,10 +417,10 @@ def str_to_int_array(s):
     # Empty array
     df_filter = []
     # Ignore DF filtering
-    if s.lower == STR_ALL:
+    if s.lower == ALL_STR:
         return
     # Extract DF filter csv
-    reader = csv.reader(s, delimiter=DF_FILTER_SEP)
+    dfs = s.split(SPLIT_STR)
     # Add values to empty array
     for d in reader:
         df_filter.append(int(d))
