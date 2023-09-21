@@ -127,15 +127,17 @@ def process_args():
         set_timestamp = str_is_true(sys.argv[5])
     if args_len > 6:
         clock_diff_limit = int(sys.argv[6])
-    if args_len > 7:
-        df_filter = get_int_array_from_str(sys.argv[7])
+#    if args_len > 7:
+#       df_filter = get_int_array_from_str(sys.argv[7])
     print('Recv host: ' + recv_host)
     print('Recv port: ' + str(recv_port))
     print('Dest host: ' + dest_host)
     print('Dest port: ' + str(dest_port))
     print('Set Timestamp: ' + str(set_timestamp))
     print('Clock diff limit: ' + str(clock_diff_limit) + 'ms')
-#    print('DF filter: ' + get_str_of_df_filter())
+    print('DF filter: ' + str(df_filter[0]))
+    print('DF filter: ' + str(df_filter[1]))
+    print('DF filter: ' + str(df_filter[2]))
     print()
 
 def shutdown_gracefully():
