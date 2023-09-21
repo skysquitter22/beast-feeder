@@ -128,14 +128,14 @@ def process_args():
     if args_len > 6:
         clock_diff_limit = int(sys.argv[6])
     if args_len > 7:
-        df_filter = str_to_int_array(sys.argv[7])
+        df_filter = get_int_array_from_str(sys.argv[7])
     print('Recv host: ' + recv_host)
     print('Recv port: ' + str(recv_port))
     print('Dest host: ' + dest_host)
     print('Dest port: ' + str(dest_port))
     print('Set Timestamp: ' + str(set_timestamp))
     print('Clock diff limit: ' + str(clock_diff_limit) + 'ms')
-    print('DF filter: ' + get_str_df_filter())
+    print('DF filter: ' + get_str_of_df_filter())
     print()
 
 def shutdown_gracefully():
@@ -411,7 +411,7 @@ def str_is_true(s):
     """ Return 'True' string detected """
     return s.lower() in ('true', '1', 'yes', 'y')
     
-def str_to_int_array(s):
+def get_int_array_from_str(s):
     """ Return an integer array of comma separated string """
     global df_filter
     # Empty array
@@ -449,7 +449,7 @@ def get_df_from_message(message):
     # Calc DF and return value
     return (message[index] >> 3) & 0x1f
     
-def get_str_df_filter():
+def get_str_of_df_filter():
     """ Return string showing DF filter """
     global df_filter
     # No filter
