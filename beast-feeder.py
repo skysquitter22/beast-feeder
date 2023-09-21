@@ -16,7 +16,7 @@ import subprocess
 # TITLE ---------------------------
 BUILD_MAJOR = '16'
 BUILD_DATE = '230922' # this is the fall-back date for versioning
-BUILD_MINOR = '02'
+BUILD_MINOR = '03'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
 # ---------------------------------
@@ -422,8 +422,8 @@ def str_to_int_array(s):
     # Extract DF filter csv
     dfs = s.split(SPLIT_STR)
     # Add values to empty array
-    for d in reader:
-        df_filter.append(int(d))
+    for df in dfs:
+        df_filter.append(int(df)
 
 def df_passed(message):
     """ Return True if DF passes given filter """
