@@ -135,9 +135,7 @@ def process_args():
     print('Dest port: ' + str(dest_port))
     print('Set Timestamp: ' + str(set_timestamp))
     print('Clock diff limit: ' + str(clock_diff_limit) + 'ms')
-    print('DF filter: ' + str(df_filter[0]))
-    print('DF filter: ' + str(df_filter[1]))
-    print('DF filter: ' + str(df_filter[2]))
+    print('DF filter: ' + str(get_str_of_df_filter()))
     print()
 
 def shutdown_gracefully():
@@ -416,15 +414,15 @@ def str_is_true(s):
 def get_int_array_from_str(s):
     """ Return an integer array of comma separated string """
     # Empty array
-    df_filter = []
-    # Ignore DF filtering
-    if s.lower == ALL_STR:
-        return
-    # Extract DF filter csv
-    dfs = s.split(SPLIT_STR)
-    # Add values to empty array
-    for df in dfs:
-        df_filter.append(int(df))
+    arr = []
+    # Ignore DF filtering if str is 'all'
+    if s.lower != ALL_STR:
+        # Extract DF filter csv
+        dfs = s.split(SPLIT_STR)
+        # Add values to empty array
+        for df in dfs:
+            df_filter.append(int(df))
+    return arr
 
 def df_passed(message):
     """ Return True if DF passes given filter """
