@@ -16,7 +16,7 @@ import subprocess
 # TITLE ---------------------------
 BUILD_MAJOR = '16'
 BUILD_DATE = '230922' # this is the fall-back date for versioning
-BUILD_MINOR = '01'
+BUILD_MINOR = '05'
 TITLE = 'SKYSQUITTER BEAST-FEEDER'
 VERSION_FILENAME = '/.VERSION.beast-feeder'
 # ---------------------------------
@@ -274,7 +274,6 @@ def send_to_destination(message):
     """ Send message to Destination via UDP """
     server_address = (dest_host, dest_port)
     sock_dest.sendto(message, server_address)
-    print(get_df_from_message(message))
 
 def msg_is_valid(message):
     """ Return True if message is to be sent; check message preamble, type and DF filter;
