@@ -274,9 +274,10 @@ def send_to_destination(message):
     """ Send message to Destination via UDP """
     server_address = (dest_host, dest_port)
     sock_dest.sendto(message, server_address)
+    print(get_df_from_message(message))
 
 def msg_is_valid(message):
-    """ Return True if message is to be sent; check message preamble and type;
+    """ Return True if message is to be sent; check message preamble, type and DF filter;
        ESC byte at beginning required """
     if message[0] != ESCAPE_BYTE:
         return False
