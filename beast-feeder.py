@@ -417,6 +417,7 @@ def get_int_array_from_str(s):
     arr = []
     # Ignore DF filtering if str is 'all'
     if s.lower != ALL_STR:
+        print('5')
         # Extract DF filter csv
         dfs = s.split(SPLIT_STR)
         # Add values to empty array
@@ -428,9 +429,11 @@ def df_passed(message):
     """ Return True if DF passes given filter """
     # No filtering
     if len(df_filter) == 0:
+        print('1')
         return True
     # Get DF from message
     df = get_df_from_message(message)
+    print('2')
     return df in df_filter
 
 def get_df_from_message(message):
@@ -450,7 +453,9 @@ def get_str_of_df_filter():
     """ Return string showing DF filter """
     # No filter
     if len(df_filter) == 0:
+        print('3')
         return 'all'
+    print('4')
     # Build DF filter string
     s = str(df_filter[0])
     i = 1
