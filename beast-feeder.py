@@ -419,6 +419,8 @@ def get_int_array_from_str(s):
     if s.lower != ALL_STR:
         # Extract DF filter csv
         dfs = s.split(SPLIT_STR)
+        print('S: ' + s)
+        print('D: ' + len(dfs)
         # Add values to empty array
         for df in dfs:
             df_filter.append(int(df))
