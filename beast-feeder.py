@@ -26,7 +26,7 @@ RECV_HOST = 'readsb'
 RECV_PORT = 30005
 DEST_HOST = '10.9.2.1'
 DEST_PORT = 11092
-SET_TIMESTAMP = False # Enable clock diff check
+SET_TIMESTAMP = True # Enable clock diff check
 CLOCK_DIFF_LIMIT = 200 # [msec] Maximum allowed clock difference
 DF_FILTER = [ 17, 20, 21 ] # Default allowed DF to be sent
 # ----------------------------
